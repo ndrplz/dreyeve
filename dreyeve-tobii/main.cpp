@@ -47,7 +47,7 @@ int main(){
 	ofstream csv_file(gaze_out_dir+string(sequence_str)+".csv");
 
 	// loop the sequence
-	cvNamedWindow("SEQUENCE", CV_WINDOW_FULLSCREEN);
+	cvNamedWindow("SEQUENCE", CV_WINDOW_FULLSCREEN); waitKey(); // to fit to screen
 	while (cap.read(cur_frame)){
 		
 		// show the video
