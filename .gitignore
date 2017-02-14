@@ -100,3 +100,5 @@ ENV/
 *.user
 *.csv
 *.sdf
+*.suo
+*.filters
