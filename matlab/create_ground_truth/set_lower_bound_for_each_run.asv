@@ -1,0 +1,20 @@
+clear; close all; clc;
+
+dataset_root = 'Z:/DATA';                   % dataset (input) folder
+
+figure(1)
+
+cut_points = zeros(0, 2);
+
+for cur_run = 1 : 74
+    
+    mean_frame_file = fullfile(dataset_root, sprintf('%02d', cur_run), sprintf('%02d_mean_frame.png', cur_run));
+    
+    imshow(mean_frame_file)
+    drawnow
+    
+    [~, y] = ginput(1);
+    
+	cur_points = [c]
+    
+end
