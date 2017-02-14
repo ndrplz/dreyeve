@@ -87,3 +87,18 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Custom
+*.opensdf
+*.exe
+*.ilk
+*.tlog
+*.obj
+*.pdb
+*.idb
+*.vcxproj
+*.user
+*.csv
+*.sdf
+*.suo
+*.filters

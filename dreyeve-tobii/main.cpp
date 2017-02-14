@@ -19,7 +19,7 @@ int main(){
 	
 	string driver_id = "david";	// unique driver identifier
 
-	vector<uchar> sequences = { 1 };	// vector of allowed sequences
+	vector<uchar> sequences = { 1, 6 };	// vector of allowed sequences
 	uchar sequence_n = sequences[rand() % sequences.size()];	// dreyeve sequence number
 
 	// create output dir
@@ -47,15 +47,14 @@ int main(){
 	ofstream csv_file(gaze_out_dir+string(sequence_str)+".csv");
 
 	// loop the sequence
-	cvNamedWindow("SEQUENCE", CV_WINDOW_FULLSCREEN);
+	cvNamedWindow("SEQUENCE", CV_WINDOW_FULLSCREEN); waitKey(); // to fit to screen
 	while (cap.read(cur_frame)){
 		
 		// show the video
 		imshow("SEQUENCE", cur_frame);
 
 		// capture and log gaze
-		// EyeXGazeData gaze = tobii.getGazeData();
-		EyeXGazeData gaze(-1, -1); // TODO: remove
+		EyeXGazeData gaze = tobii.getGazeData();
 		logGazeDataCsv(csv_file, gaze);
 
 		waitKey(1);
