@@ -28,18 +28,34 @@ if __name__ == '__main__':
     ssh.connect(args.host, username=args.user, password=args.password)
     sftp = ssh.open_sftp()
 
+    sequences = range(28, 74+1)
+    cur_seq = sequences[0]
     # send sequences
-    for i in range(1, 74+1):
-        print 'Sending sequence {}...'.format(i)
+    while cur_seq <= sequences[-1]:
+        try:
+            print 'Sending sequence {}'.format(cur_seq)
 
-        local_path = 'Z:/DATA/{:02d}/frames/*.jpg'.format(i)
-        remote_path = '/gpfs/work/IscrC_DeepVD/dabati/dreyeve_semantic_seg/data/{:02d}/frames/'.format(i)
+            local_path = 'Z:/DATA/{:02d}/frames/*.jpg'.format(cur_seq)
+            remote_path = '/gpfs/work/IscrC_DeepVD/dabati/dreyeve_semantic_seg/data/{:02d}/frames/'.format(cur_seq)
 
-        img_list = glob(local_path)
+            img_list = glob(local_path)
 
-        for im in tqdm(img_list):
-            filename = os.path.basename(im)
-            sftp.put(im, remote_path+filename)
+            for im in tqdm(img_list):
+                filename = os.path.basename(im)
+                sftp.put(im, remote_path+filename)
+            print ''
+            cur_seq += 1
+
+        except paramiko.SSHException:
+            # set up client again
+            ssh = paramiko.SSHClient()
+            ssh.load_host_keys(os.path.expanduser(os.path.join("~", ".ssh", "known_hosts")))
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(args.host, username=args.user, password=args.password)
+            sftp = ssh.open_sftp()
+
+            # redo sequence
+
 
     sftp.close()
     ssh.close()
