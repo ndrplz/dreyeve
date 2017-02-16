@@ -16,8 +16,8 @@ if __name__ == '__main__':
 
     assert args.sequence is not None, 'Please provide a correct sequence number'
 
-    dreyeve_dir = '/home/aba/dreyeve/data/'  # local
-    # dreyeve_dir = '...'  # cineca
+    # dreyeve_dir = '/home/aba/dreyeve/data/'  # local
+    dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/dreyeve_semantic_seg/data/'  # cineca
 
     data_dir = dreyeve_dir + '{:02d}/frames'.format(int(args.sequence))  # local
     out_dir = dreyeve_dir + '{:02d}/semseg'.format(int(args.sequence))  # local
