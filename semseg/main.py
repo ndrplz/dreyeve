@@ -1,7 +1,7 @@
-from dilation import DilationNet, predict
+from dilation import DilationNet, predict_no_tiles
 from os.path import join
 from glob import glob
-import matplotlib.pyplot as plt
+import numpy as np
 import argparse
 import os.path
 import cv2
@@ -15,28 +15,28 @@ if __name__ == '__main__':
 
     assert args.sequence is not None, 'Please provide a correct sequence number'
 
-    data_dir = 'Z:/DATA/{:02d}/frames/'.format(int(args.sequence))  # local
-    # data_dir = '...'  # cineca
+    dreyeve_dir = '/home/aba/dreyeve/data/'  # local
+    # dreyeve_dir = '...'  # cineca
+
+    data_dir = dreyeve_dir + '{:02d}/frames'.format(int(args.sequence))  # local
+    out_dir = dreyeve_dir + '{:02d}/semseg'.format(int(args.sequence))  # local
     assert os.path.exists(data_dir), 'Assertion error: path {} does not exist'.format(data_dir)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
     image_list = glob(join(data_dir, '*.jpg'))
 
     # get the model
     ds = 'cityscapes'
-    model = DilationNet(dataset=ds)
+    model = DilationNet(dataset=ds, input_shape=(3, 1452, 2292))
     model.compile(optimizer='sgd', loss='categorical_crossentropy')
+    model.summary()
 
     for img in image_list:
         # read and predict a image
         im = cv2.imread(img)
-        y_img = predict(im, model, ds)
+        y = predict_no_tiles(im, model, ds)
 
-        # plot results
-        fig = plt.figure()
-        a = fig.add_subplot(1, 2, 1)
-        imgplot = plt.imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-        a.set_title('Image')
-        a = fig.add_subplot(1, 2, 2)
-        imgplot = plt.imshow(y_img)
-        a.set_title('Semantic segmentation')
-        plt.show(fig)
+        np.savez_compressed(join(out_dir, os.path.basename(img)[0:-4]), y)
+
+
