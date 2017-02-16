@@ -1,6 +1,7 @@
 from dilation import DilationNet, predict_no_tiles
 from os.path import join
 from glob import glob
+from tqdm import tqdm
 import numpy as np
 import argparse
 import os.path
@@ -32,11 +33,15 @@ if __name__ == '__main__':
     model.compile(optimizer='sgd', loss='categorical_crossentropy')
     model.summary()
 
-    for img in image_list:
+    for img in tqdm(image_list):
         # read and predict a image
         im = cv2.imread(img)
         y = predict_no_tiles(im, model, ds)
+        y_resized = np.zeros(shape=(1, 19, 270, 480))
 
-        np.savez_compressed(join(out_dir, os.path.basename(img)[0:-4]), y)
+        for c in range(0, y.shape[1]):
+            y_resized[0, c] = cv2.resize(y[0, c], dsize=(480, 270))
+
+        np.savez_compressed(join(out_dir, os.path.basename(img)[0:-4]), y_resized)
 
 

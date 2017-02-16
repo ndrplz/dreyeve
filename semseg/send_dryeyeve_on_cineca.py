@@ -2,7 +2,6 @@ import os
 import paramiko
 from glob import glob
 import os
-import progressbar
 from tqdm import tqdm
 from time import sleep
 import argparse
