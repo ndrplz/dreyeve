@@ -27,7 +27,7 @@ if __name__ == '__main__':
     ssh.connect(args.host, username=args.user, password=args.password)
     sftp = ssh.open_sftp()
 
-    sequences = range(1, 68+1)
+    sequences = range(1, 74+1)
     cur_seq = sequences[0]
     # send sequences
     while cur_seq <= sequences[-1]:
