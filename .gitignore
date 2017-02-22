@@ -104,3 +104,4 @@ ENV/
 *.filters
 *.xml
 *.iml
+semseg/cineca_pids.txt
