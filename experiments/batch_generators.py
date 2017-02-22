@@ -17,6 +17,7 @@ import cv2
 def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to load a batch of the dreyeve dataset
+
     :param batchsize: batchsize
     :param nb_frames: number of frames for each batch
     :param image_size: dimension of tensors
@@ -67,6 +68,7 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 def visualize_batch(X, Y):
     """
     Helper function to visualize a batch
+
     :param X: input data: [frames, of, semseg]
     :param Y: saliency data
     """
@@ -99,6 +101,7 @@ def visualize_batch(X, Y):
 def generate_dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to generate a batch from the dreyeve dataset
+
     :param batchsize: batchsize
     :param nb_frames: number of frames for each batch
     :param image_size: dimension of tensors
@@ -113,6 +116,7 @@ def generate_dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'
 def test_load_batch():
     """
     Helper function, to load and visualize a dreyeve batch
+
     :return:
     """
     t = time()
