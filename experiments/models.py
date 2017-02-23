@@ -31,6 +31,8 @@ def C3DEncoder(input_shape, pretrained=True, branch=''):
     """
     c, fr, h, w = input_shape
     assert h % 8 == 0 and w % 8 == 0, 'I think input shape should be divisible by 8. Should it?'
+    # if h % 8 != 0 and w % 8 != 0: # more polite just for debugging purpose
+    #     print('Please consider that one of your input dimensions is not evenly divisible by 8.')
 
     # input_layers
     model_in = Input(shape=input_shape, name='input')

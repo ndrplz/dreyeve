@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import dreyeve_dir, dreyeve_train_seq, dreyeve_test_seq, frames_per_sequence
+from config import dreyeve_dir, dreyeve_train_seq, dreyeve_test_seq, total_frames_each_run
 from random import choice
 from os.path import join
 
@@ -68,7 +68,7 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
         wc2 = wc1 + w_c
 
         # sample a frame
-        start = np.random.randint(0, frames_per_sequence-nb_frames-1)  # -1 because we don't have OF for last frame
+        start = np.random.randint(0, total_frames_each_run - nb_frames - 1)  # -1 because we don't have OF for last frame
         for offset in range(0, nb_frames):
             # frame
             x = read_image(join(x_dir, '{:06d}.jpg'.format(start + offset)),
