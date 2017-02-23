@@ -49,8 +49,8 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     SEG_s = np.zeros(shape=(batchsize, 19, nb_frames, h_s, w_s), dtype=np.float32)
     SEG_c = np.zeros(shape=(batchsize, 19, nb_frames, h_c, w_c), dtype=np.float32)
 
-    Y = np.zeros(shape=(batchsize, 1, nb_frames, h, w), dtype=np.float32)
-    Y_c = np.zeros(shape=(batchsize, 1, nb_frames, h_c, w_c), dtype=np.float32)
+    Y = np.zeros(shape=(batchsize, 1, h, w), dtype=np.float32)
+    Y_c = np.zeros(shape=(batchsize, 1, h_c, w_c), dtype=np.float32)
 
     for b in range(0, batchsize):
         # extract a random sequence
@@ -91,11 +91,11 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
             SEG_s[b, :, offset, :, :] = resize_tensor(seg, new_size=(h_s, w_s))
             SEG_c[b, :, offset, :, :] = crop_tensor(seg, indexes=(hc1, hc2, wc1, wc2))
 
-            # saliency
-            y = read_image(join(y_dir, '{:06d}.png'.format(start + offset)),
-                           channels_first=True, color=False, resize_dim=image_size) / 255
-            Y[b, 0, offset, :, :] = y
-            Y_c[b, 0, offset, :, :] = crop_tensor(np.expand_dims(y, axis=0), indexes=(hc1, hc2, wc1, wc2))[0]
+        # saliency
+        y = read_image(join(y_dir, '{:06d}.png'.format(start + nb_frames - 1)),
+                       channels_first=True, color=False, resize_dim=image_size) / 255
+        Y[b, 0, :, :] = y
+        Y_c[b, 0, :, :] = crop_tensor(np.expand_dims(y, axis=0), indexes=(hc1, hc2, wc1, wc2))[0]
 
     return [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c]
 
@@ -128,7 +128,7 @@ def visualize_batch(X, Y):
             seg = cv2.cvtColor(seg, cv2.COLOR_RGB2BGR)
 
             # we have to turn y to 3 channels 255 for stitching
-            y = Y[b, 0, f, :, :]
+            y = Y[b, 0, :, :]
             y = (np.tile(y, (3, 1, 1))*255).transpose(1, 2, 0)
 
             # stitch and visualize
@@ -147,7 +147,7 @@ def visualize_batch(X, Y):
             seg_c = cv2.cvtColor(seg_c, cv2.COLOR_RGB2BGR)
 
             # we have to turn y to 3 channels 255 for stitching
-            y_c = Y_c[b, 0, f, :, :]
+            y_c = Y_c[b, 0, :, :]
             y_c = (np.tile(y_c, (3, 1, 1)) * 255).transpose(1, 2, 0)
 
             # stitch and visualize
@@ -167,7 +167,7 @@ def visualize_batch(X, Y):
 
             # we have to turn y to 3 channels 255 for stitching
             # also, we resize it to small (just for visualize it)
-            y_s = cv2.resize(Y[b, 0, f, :, :], dsize=(h_s, w_s)[::-1])
+            y_s = cv2.resize(Y[b, 0, :, :], dsize=(h_s, w_s)[::-1])
             y_s = (np.tile(y_s, (3, 1, 1)) * 255).transpose(1, 2, 0)
 
             # stitch and visualize
@@ -201,7 +201,7 @@ def test_load_batch():
     :return:
     """
     t = time()
-    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(540, 960), mode='test')
+    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='test')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)
