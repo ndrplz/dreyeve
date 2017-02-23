@@ -78,7 +78,7 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
             X_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
 
             # optical flow
-            of = read_image(join(of_dir, '{:06d}.png'.format(start + offset)),
+            of = read_image(join(of_dir, '{:06d}.png'.format(start + offset + 1)),
                             channels_first=True, resize_dim=image_size)
             OF[b, :, offset, :, :] = of
             OF_s[b, :, offset, :, :] = resize_tensor(of, new_size=(h_s, w_s))
@@ -201,7 +201,7 @@ def test_load_batch():
     :return:
     """
     t = time()
-    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(540, 960), mode='train')
+    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(540, 960), mode='test')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)
