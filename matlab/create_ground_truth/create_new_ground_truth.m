@@ -25,9 +25,16 @@ function [ret] = create_new_ground_truth(num_run, config)
         
         fprintf(1, 'RUN: %02d - FRAME: %06d\n', num_run, f);
         
+        frame_out_path = fullfile(dir_out_saliency, sprintf('%06d.png', f));
+        if exist(frame_out_path, 'file')
+            continue;
+        end
+                
         % load all (x, y) associated to a certain frame
         data    = cell2mat(gaze_data(cat(1, gaze_data{:, 2}) == f-1, [3 4]));
         data    = data(~any(isnan(data), 2), :); % remove rows that contain nans
+        
+        saliency_map = zeros(img_h, img_w);
         
         % project gaze data from frame f to garmin video
         if ~isempty(data)
@@ -39,9 +46,8 @@ function [ret] = create_new_ground_truth(num_run, config)
             
             % check that y found is compatible with max y for this run
             pt_f = pt_f(:, pt_f(2, :) < max_y_allowed);
-            if isempty(pt_f), continue; end
             
-            if any(~isnan(pt_f(:)))
+            if ~isempty(pt_f) && any(~isnan(pt_f(:)))
                 saliency_map = create_gaussian_response(pt_f', config('sigma'), [img_h, img_w]);
             end
         end
@@ -89,7 +95,7 @@ function [ret] = create_new_ground_truth(num_run, config)
         saliency_map = saliency_map ./ (eps+max(max(saliency_map)));
         saliency_map(saliency_map < 10e-5) = 0;
         
-        imwrite(saliency_map, fullfile(dir_out_saliency, sprintf('%06d.png', f)));
+        imwrite(saliency_map, frame_out_path);
         
         if 0
             imagesc(saliency_map), title(sprintf('max f = %d - saliency map', f));

@@ -25,7 +25,7 @@ config = containers.Map(keys, vals, 'UniformValues', false);
 
 % directories
 dataset_root = 'Z:/DATA';                   % dataset (input) folder
-output_root = 'D:/temp';                    % output folder where GT will be saved
+output_root = 'X:/dreyeve_GT';              % output folder where GT will be saved
 if ~exist(output_root, 'dir')
     mkdir(output_root);
 end

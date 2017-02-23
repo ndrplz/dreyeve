@@ -25,14 +25,16 @@ config = containers.Map(keys, vals, 'UniformValues', false);
 for cur_run = 1 : 74
     
     dir_frames = fullfile(config('dataset_root'), sprintf('%02d/frames/', cur_run));
-     dir_out_OF = fullfile(config('output_root'), sprintf('%02d', num_run));
-        if ~exist(dir_out_OF, 'dir')
-            mkdir(dir_out_OF)
-        end
-        
+    dir_out_OF = fullfile(config('output_root'), sprintf('%02d', cur_run));
+    if ~exist(dir_out_OF, 'dir')
+        mkdir(dir_out_OF)
+    end
+
     frames = dir(fullfile(dir_frames, '*.jpg'));
     for cur_frame = 1 : numel(frames) - 1 % skip last frame (todo do better)
         
+        fprintf(1, '[OPTICAL FLOW]   RUN: %02d - FRAME: %06d\n', cur_run, cur_frame);
+
         frame_1_path = fullfile(dir_frames, frames(cur_frame).name);
         frame_2_path = fullfile(dir_frames, frames(cur_frame + 1).name);
         
@@ -47,7 +49,7 @@ for cur_run = 1 : 74
 
         flow_img = compute_optical_flow(frame_1_path, frame_2_path, resize_h, resize_w);
         
-        imwrite(fullfile())
+        imwrite(flow_img, fullfile(dir_out_OF, sprintf('%06d.png', cur_frame)))
         
         if 0
             subplot(221), imshow(frame_1);
@@ -57,13 +59,5 @@ for cur_run = 1 : 74
     end
 end
 
-
-
-
-frame1 = 'Y:/datasets/ILSVRC2015_VID/ILSVRC2015/Data/VID/val/ILSVRC2015_val_00080002/000056.JPEG';
-frame2 = 'Y:/datasets/ILSVRC2015_VID/ILSVRC2015/Data/VID/val/ILSVRC2015_val_00080002/000057.JPEG';
-flowimg = compute_optical_flow(frame1, frame2, 300, 600);
-
-imshow(flowimg);
 
 

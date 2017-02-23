@@ -22,7 +22,7 @@ keys = {'dataset_root', 'output_root'};
 vals = {dataset_root, output_root};
 config = containers.Map(keys, vals, 'UniformValues', false);
 
-for cur_run = 74 : -1 : 1 %1 : 74
+for cur_run = 1 : 74
     
     dir_frames = fullfile(config('dataset_root'), sprintf('%02d/frames/', cur_run));
     dir_out_OF = fullfile(config('output_root'), sprintf('%02d', cur_run));
