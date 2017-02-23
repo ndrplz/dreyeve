@@ -6,6 +6,7 @@ Python project containing the main dreyeve experiments
 * `batch_generators.py` holds functions to load and yield batches, and
  some testing code;
 * `models.py` holds models for saliency prediction;
+* `train.py` holds function for training (still not working!);
 
 
 ---
