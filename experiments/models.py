@@ -1,6 +1,5 @@
-
 from keras.models import Model
-from keras.layers import Input, Convolution3D, MaxPooling3D, Reshape, Activation, merge
+from keras.layers import Input, Convolution3D, MaxPooling3D, Convolution2D, Reshape, Activation, merge, LeakyReLU, Lambda
 from keras.utils.data_utils import get_file
 from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 
@@ -43,20 +42,35 @@ def SimpleSaliencyModel(input_shape, branch=''):
     c, fr, h, w = input_shape
     assert h % 8 == 0 and w % 8 == 0, 'I think input shape should be divisible by 8. Should it?'
 
-    c3d_encoder = C3DEncoder(input_shape=input_shape, branch=branch)
+    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), branch=branch)
 
-    # input_layers
-    small_in = Input(shape=input_shape, name='input_small')
-    small_h = c3d_encoder(small_in)
-    small_h = BilinearUpsampling(upsampling=32)(small_h)  # DVD: todo this 32x upsampling is temp
-    small_out = Activation('sigmoid')(small_h)
+    # coarse + refinement
+    ff_in = Input(shape=input_shape, name='input_ff')
+    ff_last_frame = Lambda(lambda x: x[:, -1, :, :], output_shape=(c, 1, h, w))(ff_in)
+    ff_last_frame = Reshape(target_shape=(c, h, w))(ff_last_frame)  # remove singleton dimension
+    small_in = Input(shape=(c, fr, h // 4, w // 4), name='input_small')
+    coarse_h = c3d_encoder(small_in)
+    coarse_h = BilinearUpsampling(upsampling=32)(coarse_h)  # DVD: todo this 32x upsampling is temp
 
-    crop_in = Input(shape=input_shape, name='input_crop')
+    fine_h = merge([coarse_h, ff_last_frame], mode='concat', concat_axis=1)
+    fine_h = Convolution2D(32, 3, 3, border_mode='same', init='he_normal')(fine_h)
+    fine_h = LeakyReLU(alpha=.001)(fine_h)
+    fine_h = Convolution2D(64, 3, 3, border_mode='same', init='he_normal')(fine_h)
+    fine_h = LeakyReLU(alpha=.001)(fine_h)
+    fine_h = Convolution2D(128, 3, 3, border_mode='same', init='he_normal')(fine_h)
+    fine_h = LeakyReLU(alpha=.001)(fine_h)
+    fine_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal')(fine_h)
+    fine_out = Activation('sigmoid')(fine_h)
+
+    # coarse on crop
+    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='input_crop')
     crop_h = c3d_encoder(crop_in)
     crop_h = BilinearUpsampling(upsampling=8)(crop_h)
+    crop_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal')(crop_h)
     crop_out = Activation('sigmoid')(crop_h)
 
-    model = Model(input=[small_in, crop_in], output=[small_out, crop_out], name='{}_saliency_model'.format(branch))
+    model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
+                  name='{}_saliency_model'.format(branch))
 
     return model
 
@@ -69,30 +83,34 @@ def DreyeveNet(frames_per_seq, h, w):
     seg_net = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), branch='segmentation')
 
     # define inputs todo add the full frame?
-    X_small = Input(shape=(3, frames_per_seq, h, w))
-    X_crop = Input(shape=(3, frames_per_seq, h, w))
+    X_ff = Input(shape=(3, frames_per_seq, h, w))
+    X_small = Input(shape=(3, frames_per_seq, h // 4, w // 4))
+    X_crop = Input(shape=(3, frames_per_seq, h // 4, w // 4))
 
-    OF_small = Input(shape=(3, frames_per_seq, h, w))
-    OF_crop = Input(shape=(3, frames_per_seq, h, w))
+    OF_ff = Input(shape=(3, frames_per_seq, h, w))
+    OF_small = Input(shape=(3, frames_per_seq, h // 4, w // 4))
+    OF_crop = Input(shape=(3, frames_per_seq, h // 4, w // 4))
 
-    SEG_small = Input(shape=(19, frames_per_seq, h, w))
-    SEG_crop = Input(shape=(19, frames_per_seq, h, w))
+    SEG_ff = Input(shape=(19, frames_per_seq, h, w))
+    SEG_small = Input(shape=(19, frames_per_seq, h // 4, w // 4))
+    SEG_crop = Input(shape=(19, frames_per_seq, h // 4, w // 4))
 
-    x_pred_small, x_pred_crop = im_net([X_small, X_crop])
-    of_pred_small, of_pred_crop = of_net([OF_small, OF_crop])
-    seg_pred_small, seg_pred_crop = seg_net([SEG_small, SEG_crop])
+    x_pred_fine, x_pred_crop = im_net([X_ff, X_small, X_crop])
+    of_pred_fine, of_pred_crop = of_net([OF_ff, OF_small, OF_crop])
+    seg_pred_fine, seg_pred_crop = seg_net([SEG_ff, SEG_small, SEG_crop])
 
-    small_out = merge([x_pred_small, of_pred_small, seg_pred_small], mode='sum')
-    small_out = Activation('sigmoid')(small_out)
+    fine_out = merge([x_pred_fine, of_pred_fine, seg_pred_fine], mode='sum')
+    fine_out = Activation('sigmoid')(fine_out)
 
     crop_out = merge([x_pred_crop, of_pred_crop, seg_pred_crop], mode='sum')
     crop_out = Activation('sigmoid')(crop_out)
 
-    model = Model(input=[X_small, X_crop, OF_small, OF_crop, SEG_small, SEG_crop], output=[small_out, crop_out], name='DreyeveNet')
+    model = Model(input=[X_ff, X_small, X_crop, OF_ff, OF_small, OF_crop, SEG_ff, SEG_small, SEG_crop],
+                  output=[fine_out, crop_out], name='DreyeveNet')
 
     return model
 
 
 if __name__ == '__main__':
-    model = DreyeveNet(frames_per_seq=16, h=1024, w=2048)
+    model = DreyeveNet(frames_per_seq=16, h=448, w=800)
     model.summary()
