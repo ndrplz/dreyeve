@@ -1,9 +1,9 @@
 from models import DreyeveNet, saliency_loss
 from batch_generators import generate_dreyeve_batch
+from config import batchsize, frames_per_seq, h, w
+
 
 if __name__ == '__main__':
-    batchsize = 1
-    frames_per_seq, h, w = 16, 256, 512
 
     model = DreyeveNet(frames_per_seq=frames_per_seq, h=h, w=w)
     model.compile(optimizer='adam', loss=saliency_loss())
