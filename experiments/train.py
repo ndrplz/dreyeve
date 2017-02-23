@@ -12,4 +12,3 @@ if __name__ == '__main__':
     model.fit_generator(generator=generate_dreyeve_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                          image_size=(h, w), mode='train'),
                         samples_per_epoch=batchsize*32, nb_epoch=4)
-
