@@ -6,7 +6,8 @@ Python project containing the main dreyeve experiments
 * `batch_generators.py` holds functions to load and yield batches, and
  some testing code;
 * `models.py` holds models for saliency prediction;
-* `train.py` holds function for training (still not working!);
+* `train.py` holds function for training;
+* `callbacks.py` holds keras callbacks;
 
 
 ---
@@ -14,5 +15,4 @@ Python project containing the main dreyeve experiments
 #### TODOS:
 * maybe remove mean in batch generation?
 * refine models
-* callbacks
-* scripts to train
+* refine callbacks
