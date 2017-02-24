@@ -90,4 +90,4 @@ def get_callbacks(branch):
 
     return [PredictionCallback(branch=branch),
             Checkpointer(branch=branch),
-            ReduceLROnPlateau(monitor='train_loss', factor=0.5, patience=5, min_lr=1e-6)]
+            ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=1e-6)]
