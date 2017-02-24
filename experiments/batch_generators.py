@@ -298,7 +298,7 @@ def generate_dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='
     :return: a tuple like: ([SEG, SEG_s, SEG_c], [Y, Y_c])
     """
     while True:
-        yield dreyeve_batch(batchsize=batchsize, nb_frames=nb_frames, image_size=image_size, mode=mode, gt_type=gt_type)
+        yield dreyeve_SEG_batch(batchsize=batchsize, nb_frames=nb_frames, image_size=image_size, mode=mode, gt_type=gt_type)
 
 
 def generate_dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
