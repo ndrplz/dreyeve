@@ -100,7 +100,7 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
                 B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
         B_ff[b, :, 0, :, :] = x
 
-    return tuple((B_ff, B_s, B_c))
+    return [B_ff, B_s, B_c]
 
 
 def load_saliency_data(signatures, nb_frames, image_size, gt_type):
@@ -134,7 +134,7 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
         Y[b, 0, :, :] = y
         Y_c[b, 0, :, :] = crop_tensor(np.expand_dims(y, axis=0), indexes=(hc1, hc2, wc1, wc2))[0]
 
-    return tuple((Y, Y_c))
+    return [Y, Y_c]
 
 
 def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
@@ -252,7 +252,7 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')
     Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
-    return I + OF + SEG, Y  # tuple "+" concatenates
+    return I + OF + SEG, Y  # list "+" concatenates
 
 
 def generate_dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
@@ -271,7 +271,7 @@ def generate_dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fi
                               image_size=image_size, mode=mode, gt_type=gt_type)
 
 
-def generate_dreyeve__OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
+def generate_dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to generate a batch from the dreyeve dataset. The batch will only contain optical flow
 
@@ -400,7 +400,7 @@ def test_load_batch():
     Helper function, to load and visualize a dreyeve batch
     """
     t = time()
-    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
+    X, Y = dreyeve_SEG_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)
