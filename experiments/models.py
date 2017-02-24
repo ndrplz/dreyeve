@@ -91,14 +91,14 @@ def SimpleSaliencyModel(input_shape, branch=''):
     fine_h = Convolution2D(128, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv3'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
     fine_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_refine_conv4'.format(branch))(fine_h)
-    fine_out = Activation('sigmoid')(fine_h)
+    fine_out = Activation('sigmoid', name='prediction_fine')(fine_h)
 
     # coarse on crop
     crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
     crop_h = c3d_encoder(crop_in)
     crop_h = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(crop_h)
     crop_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_crop_final_conv'.format(branch))(crop_h)
-    crop_out = Activation('sigmoid')(crop_h)
+    crop_out = Activation('sigmoid', name='prediction_crop')(crop_h)
 
     model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
                   name='{}_saliency_model'.format(branch))
