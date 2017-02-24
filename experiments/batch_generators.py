@@ -400,7 +400,7 @@ def test_load_batch():
     Helper function, to load and visualize a dreyeve batch
     """
     t = time()
-    X, Y = dreyeve_SEG_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
+    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)
