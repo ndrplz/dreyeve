@@ -1,6 +1,8 @@
 import numpy as np
 
-from config import dreyeve_dir, dreyeve_train_seq, dreyeve_test_seq, total_frames_each_run
+from config import dreyeve_dir, total_frames_each_run
+from config import dreyeve_train_seq, dreyeve_test_seq
+from config import train_frame_range, val_frame_range, test_frame_range
 from random import choice
 from os.path import join
 
@@ -14,12 +16,12 @@ from time import time
 import cv2
 
 
-def sample_signature(sequences, nb_frames, image_size):
+def sample_signature(sequences, allowed_frames, image_size):
     """
     Function to create a unique batch signature.
 
     :param sequences: sequences to sample from
-    :param nb_frames: number of temporal frames for each sample
+    :param allowed_frames: range of allowed frames to sample the sequence start from.
     :param image_size: in the form (h,w). Needed to crop randomly
     :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2)
     """
@@ -31,7 +33,7 @@ def sample_signature(sequences, nb_frames, image_size):
     num_run = choice(sequences)
 
     # get random start of sequence
-    start = np.random.randint(0, total_frames_each_run - nb_frames - 1)  # -1 because we don't have OF for last frame
+    start = choice(allowed_frames)
 
     # get random crop
     hc1 = np.random.randint(0, h - h_c)
@@ -144,21 +146,28 @@ def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     :param batchsize: batchsize
     :param nb_frames: number of temporal frames in each sample
     :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `test`]
+    :param mode: choose among [`train`, `val`, `test`]
     :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
     :return: an image batch and the relative saliency in the form (X,Y)
     """
-    assert mode in ['train', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
+    assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
     if mode == 'train':
         sequences = dreyeve_train_seq
+        allowed_frames = train_frame_range
+    elif mode == 'val':
+        sequences = dreyeve_train_seq
+        allowed_frames = val_frame_range
     elif mode == 'test':
         sequences = dreyeve_test_seq
+        allowed_frames = test_frame_range
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
-        signatures.append(sample_signature(sequences=sequences, nb_frames=nb_frames, image_size=image_size))
+        signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
+                                           image_size=image_size))
+
 
     # get an image batch
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
@@ -173,21 +182,28 @@ def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     :param batchsize: batchsize
     :param nb_frames: number of temporal frames in each sample
     :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `test`]
+    :param mode: choose among [`train`, `val`, `test`]
     :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
     :return: an optical flow batch and the relative saliency in the form (X,Y)
     """
-    assert mode in ['train', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
+    assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
     if mode == 'train':
         sequences = dreyeve_train_seq
+        allowed_frames = train_frame_range
+    elif mode == 'val':
+        sequences = dreyeve_train_seq
+        allowed_frames = val_frame_range
     elif mode == 'test':
         sequences = dreyeve_test_seq
+        allowed_frames = test_frame_range
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
-        signatures.append(sample_signature(sequences=sequences, nb_frames=nb_frames, image_size=image_size))
+        signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
+                                           image_size=image_size))
+
 
     # get an optical flow batch
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
@@ -202,21 +218,28 @@ def dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     :param batchsize: batchsize
     :param nb_frames: number of temporal frames in each sample
     :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `test`]
+    :param mode: choose among [`train`, `val`, `test`]
     :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
     :return: a segmentation batch and the relative saliency in the form (X,Y)
     """
-    assert mode in ['train', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
+    assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
     if mode == 'train':
         sequences = dreyeve_train_seq
+        allowed_frames = train_frame_range
+    elif mode == 'val':
+        sequences = dreyeve_train_seq
+        allowed_frames = val_frame_range
     elif mode == 'test':
         sequences = dreyeve_test_seq
+        allowed_frames = test_frame_range
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
-        signatures.append(sample_signature(sequences=sequences, nb_frames=nb_frames, image_size=image_size))
+        signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
+                                           image_size=image_size))
+
 
     # get an segmentation batch
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')
@@ -231,21 +254,27 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     :param batchsize: batchsize
     :param nb_frames: number of frames for each batch
     :param image_size: dimension of tensors, must satisfy (h,w) % 4 = (0,0)
-    :param mode: `train` or `test`
+    :param mode: choose among [`train`, `val`, `test`]
     :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
     :return: a tuple like: [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c]
     """
-    assert mode in ['train', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
+    assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
     if mode == 'train':
         sequences = dreyeve_train_seq
+        allowed_frames = train_frame_range
+    elif mode == 'val':
+        sequences = dreyeve_train_seq
+        allowed_frames = val_frame_range
     elif mode == 'test':
         sequences = dreyeve_test_seq
+        allowed_frames = test_frame_range
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
-        signatures.append(sample_signature(sequences=sequences, nb_frames=nb_frames, image_size=image_size))
+        signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
+                                           image_size=image_size))
 
     # get all batches
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
@@ -400,7 +429,7 @@ def test_load_batch():
     Helper function, to load and visualize a dreyeve batch
     """
     t = time()
-    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
+    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='val', gt_type='fix')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)

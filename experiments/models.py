@@ -20,7 +20,7 @@ def saliency_loss():
     return sum_squared_error
 
 
-def C3DEncoder(input_shape, pretrained=True, branch=''):
+def C3DEncoder(input_shape, pretrained, branch=''):
     """
     Function for constructing a C3D encoder network, used for coarse prediction in dreyeve.
 
@@ -50,7 +50,7 @@ def C3DEncoder(input_shape, pretrained=True, branch=''):
     H = MaxPooling3D(pool_size=(4, 1, 1), strides=(4, 1, 1), border_mode='valid', name='pool4')(H)
     # DVD: once upon a time, this pooling had pool_size=(2, 2, 2) strides=(4, 2, 2)
 
-    model_out = Reshape((512, h // 8, w // 8))(H)  # squeeze out temporal dimension
+    model_out = Reshape(target_shape=(512, h // 8, w // 8))(H)  # squeeze out temporal dimension
 
     model = Model(input=model_in, output=model_out, name='{}_c3d_encoder'.format(branch))
 
@@ -61,7 +61,7 @@ def C3DEncoder(input_shape, pretrained=True, branch=''):
     return model
 
 
-def SimpleSaliencyModel(input_shape, branch=''):
+def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     """
     Function for constructing a saliency model (coarse + fine). This will be a single branch
     of the finale DreyeveNet.
@@ -73,7 +73,7 @@ def SimpleSaliencyModel(input_shape, branch=''):
     c, fr, h, w = input_shape
     assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
 
-    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), branch=branch)
+    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), pretrained=c3d_pretrained, branch=branch)
 
     # coarse + refinement
     ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
@@ -116,9 +116,9 @@ def DreyeveNet(frames_per_seq, h, w):
     :return: a Keras model
     """
     # get saliency branches
-    im_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), branch='image')
-    of_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), branch='optical_flow')
-    seg_net = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), branch='segmentation')
+    im_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
+    of_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='optical_flow')
+    seg_net = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='segmentation')
 
     # define inputs
     X_ff = Input(shape=(3, 1, h, w), name='image_fullframe')

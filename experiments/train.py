@@ -33,6 +33,7 @@ def train_flow_branch():
                                                          image_size=(h, w), mode='train'),
                         samples_per_epoch=batchsize * 32, nb_epoch=4)
 
+
 def train_seg_branch():
     model = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), branch='semseg')
     model.compile(optimizer='adam', loss=saliency_loss())
@@ -43,6 +44,5 @@ def train_seg_branch():
                         samples_per_epoch=batchsize * 32, nb_epoch=4)
 
 
-
 if __name__ == '__main__':
-    train_seg_branch()
+    fine_tuning()
