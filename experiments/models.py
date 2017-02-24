@@ -66,22 +66,22 @@ def SimpleSaliencyModel(input_shape, branch=''):
     Function for constructing a saliency model (coarse + fine). This will be a single branch
     of the finale DreyeveNet.
 
-    :param input_shape: in the form (channels, frames, h, w)
+    :param input_shape: in the form (channels, frames, h, w). h and w refer to the fullframe size.
     :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
     :return: a Keras model
     """
     c, fr, h, w = input_shape
-    assert h % 8 == 0 and w % 8 == 0, 'I think input shape should be divisible by 8. Should it?'
+    assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
 
     c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), branch=branch)
 
     # coarse + refinement
-    ff_in = Input(shape=input_shape, name='{}_input_ff'.format(branch))
-    ff_last_frame = Lambda(lambda x: x[:, :, fr-1, :, :], output_shape=(c, 1, h, w))(ff_in)
-    ff_last_frame = Reshape(target_shape=(c, h, w))(ff_last_frame)  # remove singleton dimension
+    ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
+    ff_last_frame = Reshape(target_shape=(c, h, w))(ff_in)  # remove singleton dimension
     small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
     coarse_h = c3d_encoder(small_in)
-    coarse_h = BilinearUpsampling(upsampling=32, name='{}_32x_upsampling'.format(branch))(coarse_h)  # DVD: todo this 32x upsampling is temp
+    # DVD: todo this 32x upsampling is temp
+    coarse_h = BilinearUpsampling(upsampling=32, name='{}_32x_upsampling'.format(branch))(coarse_h)
 
     fine_h = merge([coarse_h, ff_last_frame], mode='concat', concat_axis=1, name='{}_full_frame_concat'.format(branch))
     fine_h = Convolution2D(32, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv1'.format(branch))(fine_h)
@@ -111,8 +111,8 @@ def DreyeveNet(frames_per_seq, h, w):
     Function for constructing the whole DreyeveNet
 
     :param frames_per_seq: how many frames in each sequence
-    :param h: h
-    :param w: w
+    :param h: h (fullframe)
+    :param w: w (fullframe)
     :return: a Keras model
     """
     # get saliency branches
@@ -121,15 +121,15 @@ def DreyeveNet(frames_per_seq, h, w):
     seg_net = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), branch='segmentation')
 
     # define inputs
-    X_ff = Input(shape=(3, frames_per_seq, h, w), name='image_fullframe')
+    X_ff = Input(shape=(3, 1, h, w), name='image_fullframe')
     X_small = Input(shape=(3, frames_per_seq, h // 4, w // 4), name='image_resized')
     X_crop = Input(shape=(3, frames_per_seq, h // 4, w // 4), name='image_cropped')
 
-    OF_ff = Input(shape=(3, frames_per_seq, h, w), name='flow_fullframe')
+    OF_ff = Input(shape=(3, 1, h, w), name='flow_fullframe')
     OF_small = Input(shape=(3, frames_per_seq, h // 4, w // 4), name='flow_resized')
     OF_crop = Input(shape=(3, frames_per_seq, h // 4, w // 4), name='flow_cropped')
 
-    SEG_ff = Input(shape=(19, frames_per_seq, h, w), name='semseg_fullframe')
+    SEG_ff = Input(shape=(19, 1, h, w), name='semseg_fullframe')
     SEG_small = Input(shape=(19, frames_per_seq, h // 4, w // 4), name='semseg_resized')
     SEG_crop = Input(shape=(19, frames_per_seq, h // 4, w // 4), name='semseg_cropped')
 
