@@ -8,7 +8,7 @@ from callbacks import get_callbacks
 
 def fine_tuning():
     model = DreyeveNet(frames_per_seq=frames_per_seq, h=h, w=w)
-    model.compile(optimizer=opt, loss=saliency_loss(), loss_weights=[1, 100])
+    model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
 
     model.fit_generator(generator=generate_dreyeve_batch(batchsize=batchsize, nb_frames=frames_per_seq,
@@ -23,7 +23,7 @@ def fine_tuning():
 
 def train_image_branch():
     model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
-    model.compile(optimizer=opt, loss=saliency_loss(), loss_weights=[1, 100])
+    model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
 
     model.fit_generator(generator=generate_dreyeve_I_batch(batchsize=batchsize, nb_frames=frames_per_seq,
@@ -38,7 +38,7 @@ def train_image_branch():
 
 def train_flow_branch():
     model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='flow')
-    model.compile(optimizer=opt, loss=saliency_loss(), loss_weights=[1, 100])
+    model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
 
     model.fit_generator(generator=generate_dreyeve_OF_batch(batchsize=batchsize, nb_frames=frames_per_seq,
@@ -53,7 +53,7 @@ def train_flow_branch():
 
 def train_seg_branch():
     model = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='semseg')
-    model.compile(optimizer=opt, loss=saliency_loss(), loss_weights=[1, 100])
+    model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
 
     model.fit_generator(generator=generate_dreyeve_SEG_batch(batchsize=batchsize, nb_frames=frames_per_seq,

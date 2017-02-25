@@ -8,16 +8,30 @@ from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 C3D_WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/c3d_weights/w_up2_conv4_new.h5'
 
 
-def saliency_loss():
+def saliency_loss(name, mse_beta=None):
     """
     Returns loss for the saliency task.
 
     TODO: have more functions you can choose with a string parameter
     :return: the loss symbolic function
     """
+    assert name in ['mse', 'sse'], 'Unknown loss function: {}'.format(name)
+
+    def mean_squared_error(y_true, y_pred):
+        return K.mean(K.square(y_pred - y_true))
+
+    def weighted_mean_squared_error(y_true, y_pred):
+        return K.mean(K.square(y_pred - y_true) / (1 - y_true + mse_beta))
+
     def sum_squared_error(y_true, y_pred):
         return K.sum(K.square(y_pred - y_true))
-    return sum_squared_error
+
+    if name == 'mse' and mse_beta is not None:
+        return weighted_mean_squared_error
+    elif name == 'mse' and mse_beta is None:
+        return mean_squared_error
+    elif name == 'sse':
+        return sum_squared_error
 
 
 def C3DEncoder(input_shape, pretrained, branch=''):
