@@ -107,3 +107,4 @@ ENV/
 semseg/cineca_pids.txt
 experiments/predictions
 experiments/checkpoints
+experiments/move_dreyeve_dirs.py
