@@ -5,6 +5,7 @@ import os
 
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from computer_vision_utils.stitching import stitch_together
+from computer_vision_utils.io_helper import write_image
 from config import batchsize, frames_per_seq, h, w
 from keras.callbacks import ReduceLROnPlateau
 from utils import seg_to_colormap
@@ -47,22 +48,22 @@ class PredictionCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
 
         if self.branch == 'image':
-            X, Y = dreyeve_I_batch(batchsize=batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_I_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                    mode='val', gt_type='fix')
         elif self.branch == 'optical_flow':
-            X, Y = dreyeve_OF_batch(batchsize=batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_OF_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                     mode='val', gt_type='fix')
         elif self.branch == 'semseg':
-            X, Y = dreyeve_SEG_batch(batchsize=batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_SEG_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                      mode='val', gt_type='fix')
         elif self.branch == 'all':
-            X, Y = dreyeve_batch(batchsize=batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                  mode='val', gt_type='fix')
 
         # predict batch
         Z = self.model.predict(X)
 
-        for b in range(0, batchsize):
+        for b in range(0, 2 * batchsize):
             # image
             if self.branch == 'image':
                 x_img = X[0][b]  # fullframe, b-th image
@@ -82,7 +83,7 @@ class PredictionCallback(keras.callbacks.Callback):
 
             # stitch and write
             stitch = stitch_together([x_img, z_img, y_img], layout=(1, 3))
-            cv2.imwrite(join(self.out_dir_path, '{:02d}.png'.format(b+1)), stitch)
+            write_image(join(self.out_dir_path, 'e{:02d}_{:02d}.png'.format(epoch+1, b+1)), stitch, channels_first=False)
 
 
 def get_callbacks(branch):
