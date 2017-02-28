@@ -5,14 +5,11 @@ import os
 
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from computer_vision_utils.stitching import stitch_together
-<<<<<<< HEAD
 from config import batchsize, frames_per_seq, h, w, log_dir
 from keras.callbacks import ReduceLROnPlateau, CSVLogger
-=======
 from computer_vision_utils.io_helper import write_image
 from config import batchsize, frames_per_seq, h, w
 from keras.callbacks import ReduceLROnPlateau
->>>>>>> d231b10ab61d89d901bfb3fb1c3dc237588e90e0
 from utils import seg_to_colormap
 from os.path import join, exists
 
