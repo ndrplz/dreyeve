@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import dreyeve_dir, total_frames_each_run
+from config import dreyeve_dir
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
 from random import choice
