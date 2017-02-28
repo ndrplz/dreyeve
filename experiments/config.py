@@ -7,6 +7,7 @@ dreyeve_test_seq = range(38, 74+1)
 n_sequences = 74
 total_frames_each_run = 7500
 
+log_dir = 'logs'
 
 # --- TRAIN --- #
 batchsize = 2

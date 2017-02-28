@@ -2,11 +2,14 @@ from models import DreyeveNet, saliency_loss, SimpleSaliencyModel
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
 from config import batchsize, frames_per_seq, h, w, opt
-
+import uuid
 from callbacks import get_callbacks
 
 
 def fine_tuning():
+
+    experiment_id = 'DREYEVE_{}'.format(uuid.uuid4())
+
     model = DreyeveNet(frames_per_seq=frames_per_seq, h=h, w=w)
     model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
@@ -18,10 +21,13 @@ def fine_tuning():
                         nb_val_samples=batchsize * 5,
                         samples_per_epoch=batchsize * 256,
                         nb_epoch=999,
-                        callbacks=get_callbacks(branch='all'))
+                        callbacks=get_callbacks(experiment_id=experiment_id))
 
 
 def train_image_branch():
+
+    experiment_id = 'COLOR_{}'.format(uuid.uuid4())
+
     model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
     model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
@@ -33,10 +39,13 @@ def train_image_branch():
                         nb_val_samples=batchsize * 5,
                         samples_per_epoch=batchsize * 256,
                         nb_epoch=999,
-                        callbacks=get_callbacks(branch='image'))
+                        callbacks=get_callbacks(experiment_id=experiment_id))
 
 
 def train_flow_branch():
+
+    experiment_id = 'FLOW_{}'.format(uuid.uuid4())
+
     model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='flow')
     model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
@@ -45,13 +54,16 @@ def train_flow_branch():
                                                             image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_OF_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                   image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize * 5,
-                        samples_per_epoch=batchsize * 256,
+                        nb_val_samples=batchsize * 128,
+                        samples_per_epoch=batchsize * 512,
                         nb_epoch=999,
-                        callbacks=get_callbacks(branch='optical_flow'))
+                        callbacks=get_callbacks(experiment_id=experiment_id))
 
 
 def train_seg_branch():
+
+    experiment_id = 'SEGM_{}'.format(uuid.uuid4())
+
     model = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='semseg')
     model.compile(optimizer=opt, loss=saliency_loss(name='mse', mse_beta=0.1), loss_weights=[1, 1])
     model.summary()
@@ -63,7 +75,7 @@ def train_seg_branch():
                         nb_val_samples=batchsize*5,
                         samples_per_epoch=batchsize * 256,
                         nb_epoch=999,
-                        callbacks=get_callbacks(branch='semseg'))
+                        callbacks=get_callbacks(experiment_id=experiment_id))
 
 
 if __name__ == '__main__':

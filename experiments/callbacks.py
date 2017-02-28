@@ -5,35 +5,51 @@ import os
 
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from computer_vision_utils.stitching import stitch_together
-from config import batchsize, frames_per_seq, h, w
-from keras.callbacks import ReduceLROnPlateau
+from config import batchsize, frames_per_seq, h, w, log_dir
+from keras.callbacks import ReduceLROnPlateau, CSVLogger
 from utils import seg_to_colormap
-from os.path import join
+from os.path import join, exists
+
+
+def get_branch_from_experiment_id(experiment_id):
+
+    assert isinstance(experiment_id, basestring), "Experiment ID must be a string."
+
+    branch = None
+    if experiment_id.lower().startswith('dreyeve'):
+        branch = "all"
+    elif experiment_id.lower().startswith('color'):
+        branch = "image"
+    elif experiment_id.lower().startswith('flow'):
+        branch = "optical_flow"
+    elif experiment_id.lower().startswith('segm'):
+        branch = "semseg"
+
+    return branch
 
 
 class Checkpointer(keras.callbacks.Callback):
-    def __init__(self, branch):
+    def __init__(self, experiment_id):
         # create output directories if not existent
-        out_dir_path = join('checkpoints', branch)
+        out_dir_path = join('checkpoints', experiment_id)
         if not os.path.exists(out_dir_path):
             os.makedirs(out_dir_path)
 
-        # set out dir as attribute of PredictionCallback
         self.out_dir_path = out_dir_path
 
     def on_epoch_end(self, epoch, logs={}):
-        self.model.save_weights(join(self.out_dir_path, 'w.h5'))
+        self.model.save_weights(join(self.out_dir_path, 'w_epoch_{:06d}.h5'.format(epoch)))
 
 
 # TODO make this work for finetuning
 class PredictionCallback(keras.callbacks.Callback):
 
-    def __init__(self, branch):
+    def __init__(self, experiment_id):
 
-        self.branch = branch
+        self.branch = get_branch_from_experiment_id(experiment_id)
 
         # create output directories if not existent
-        out_dir_path = join('predictions', branch)
+        out_dir_path = join('predictions', experiment_id)
         if not os.path.exists(out_dir_path):
             os.makedirs(out_dir_path)
 
@@ -85,9 +101,13 @@ class PredictionCallback(keras.callbacks.Callback):
             cv2.imwrite(join(self.out_dir_path, '{:02d}.png'.format(b+1)), stitch)
 
 
-def get_callbacks(branch):
-    assert branch in ['image', 'optical_flow', 'semseg', 'all'], 'Unknown model {} for get callbacks'.format(branch)
+def get_callbacks(experiment_id):
 
-    return [PredictionCallback(branch=branch),
-            Checkpointer(branch=branch),
-            ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=1e-6)]
+    if not exists(log_dir):
+        os.makedirs(log_dir)
+
+    return [PredictionCallback(experiment_id=experiment_id),
+            Checkpointer(experiment_id=experiment_id),
+            ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=1e-6),
+            CSVLogger(join(log_dir, '{}.txt'.format(experiment_id)))]
+
