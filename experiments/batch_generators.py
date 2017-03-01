@@ -84,10 +84,14 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
 
         data_dir = join(dreyeve_dir, '{:02d}'.format(num_run), subdir)
 
+        # mean frame image, for each run is different
+        mean_image_path = join(join(dreyeve_dir, '{:02d}'.format(num_run), '{:02d}_mean_frame.png'.format(num_run)))
+        mean_image = read_image(mean_image_path, channels_first=True, resize_dim=image_size)  # to remove
         for offset in range(0, nb_frames):
             if batch_type == 'image':
                 x = read_image(join(data_dir, '{:06d}.jpg'.format(start + offset)),
-                               channels_first=True, resize_dim=image_size)
+                               channels_first=True, resize_dim=image_size) - mean_image
+
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
                 B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
             elif batch_type == 'optical_flow':
@@ -132,7 +136,7 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
         y_dir = join(dreyeve_dir, '{:02d}'.format(num_run), 'saliency' if gt_type == 'sal' else 'saliency_fix')
         # saliency
         y = read_image(join(y_dir, '{:06d}.png'.format(start + nb_frames - 1)),
-                       channels_first=True, color=False, resize_dim=image_size) / 255
+                       channels_first=True, color=False, resize_dim=image_size)
         Y[b, 0, :, :] = y
         Y_c[b, 0, :, :] = crop_tensor(np.expand_dims(y, axis=0), indexes=(hc1, hc2, wc1, wc2))[0]
 
@@ -167,7 +171,6 @@ def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
                                            image_size=image_size))
-
 
     # get an image batch
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
@@ -204,7 +207,6 @@ def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
                                            image_size=image_size))
 
-
     # get an optical flow batch
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
     Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
@@ -239,7 +241,6 @@ def dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
                                            image_size=image_size))
-
 
     # get an segmentation batch
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')

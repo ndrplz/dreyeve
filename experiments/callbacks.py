@@ -95,15 +95,15 @@ class PredictionCallback(keras.callbacks.Callback):
                 x_img = seg_to_colormap(np.argmax(np.squeeze(x_img, axis=1), axis=0))
 
             # prediction
-            z_img = np.tile(np.expand_dims(Z[0][b, 0] * 255, axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            z_img = np.tile(np.expand_dims(Z[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # groundtruth
-            y_img = np.tile(np.expand_dims(Y[0][b, 0] * 255, axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            y_img = np.tile(np.expand_dims(Y[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # stitch and write
             stitch = stitch_together([normalize(x_img), z_img, y_img], layout=(1, 3))
             write_image(join(self.out_dir_path, 'e{:02d}_{:02d}.png'.format(epoch+1, b+1)), stitch,
-                        normalize=True, channels_first=False)
+                        channels_first=False)
 
 
 def get_callbacks(experiment_id):

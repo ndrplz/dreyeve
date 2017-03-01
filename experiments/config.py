@@ -18,4 +18,8 @@ train_frame_range = range(0, 3500 - frames_per_seq - 1) + range(4000, total_fram
 val_frame_range = range(3500, 4000 - frames_per_seq - 1)
 test_frame_range = range(0, total_frames_each_run-frames_per_seq - 1)
 
-opt = Adam(lr=1e-4)
+w_loss_cropped = 0.5
+w_loss_fine = 1.0
+loss_str = 'mse'
+mse_beta = 0.1
+opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)

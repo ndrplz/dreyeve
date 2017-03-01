@@ -21,7 +21,7 @@ def saliency_loss(name, mse_beta=None):
         return K.mean(K.square(y_pred - y_true))
 
     def weighted_mean_squared_error(y_true, y_pred):
-        return K.mean(K.square(y_pred - y_true) / (1 - y_true + mse_beta))
+        return K.mean(K.square(y_pred - y_true) / (255 - y_true + mse_beta))  # TODO does 255-y_true make sense?
 
     def sum_squared_error(y_true, y_pred):
         return K.sum(K.square(y_pred - y_true))
@@ -105,14 +105,14 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     fine_h = Convolution2D(128, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv3'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
     fine_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_refine_conv4'.format(branch))(fine_h)
-    fine_out = Activation('sigmoid', name='prediction_fine')(fine_h)
+    fine_out = Activation('relu', name='prediction_fine')(fine_h)
 
     # coarse on crop
     crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
     crop_h = c3d_encoder(crop_in)
     crop_h = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(crop_h)
     crop_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_crop_final_conv'.format(branch))(crop_h)
-    crop_out = Activation('sigmoid', name='prediction_crop')(crop_h)
+    crop_out = Activation('relu', name='prediction_crop')(crop_h)
 
     model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
                   name='{}_saliency_model'.format(branch))
@@ -152,10 +152,10 @@ def DreyeveNet(frames_per_seq, h, w):
     seg_pred_fine, seg_pred_crop = seg_net([SEG_ff, SEG_small, SEG_crop])
 
     fine_out = merge([x_pred_fine, of_pred_fine, seg_pred_fine], mode='sum', name='merge_fine_prediction')
-    fine_out = Activation('sigmoid', name='fine_prediction')(fine_out)
+    fine_out = Activation('relu', name='fine_prediction')(fine_out)
 
     crop_out = merge([x_pred_crop, of_pred_crop, seg_pred_crop], mode='sum', name='merge_crop_prediction')
-    crop_out = Activation('sigmoid', name='crop_prediction')(crop_out)
+    crop_out = Activation('relu', name='crop_prediction')(crop_out)
 
     model = Model(input=[X_ff, X_small, X_crop, OF_ff, OF_small, OF_crop, SEG_ff, SEG_small, SEG_crop],
                   output=[fine_out, crop_out], name='DreyeveNet')
