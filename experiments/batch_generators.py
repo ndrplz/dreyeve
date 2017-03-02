@@ -67,6 +67,8 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
         B_s = np.zeros(shape=(batchsize, 3, nb_frames, h_s, w_s), dtype=np.float32)
         B_c = np.zeros(shape=(batchsize, 3, nb_frames, h_c, w_c), dtype=np.float32)
         subdir = 'frames'
+        # mean frame image, to subtract mean
+        mean_image = read_image(join(dreyeve_dir, 'dreyeve_mean_frame.png'), channels_first=True, resize_dim=image_size)
     elif batch_type == 'optical_flow':
         B_ff = np.zeros(shape=(batchsize, 3, 1, h, w), dtype=np.float32)
         B_s = np.zeros(shape=(batchsize, 3, nb_frames, h_s, w_s), dtype=np.float32)
@@ -84,9 +86,6 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
 
         data_dir = join(dreyeve_dir, '{:02d}'.format(num_run), subdir)
 
-        # mean frame image, for each run is different
-        mean_image_path = join(join(dreyeve_dir, '{:02d}'.format(num_run), '{:02d}_mean_frame.png'.format(num_run)))
-        mean_image = read_image(mean_image_path, channels_first=True, resize_dim=image_size)  # to remove
         for offset in range(0, nb_frames):
             if batch_type == 'image':
                 x = read_image(join(data_dir, '{:06d}.jpg'.format(start + offset)),
@@ -96,12 +95,12 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
                 B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
             elif batch_type == 'optical_flow':
                 x = read_image(join(data_dir, '{:06d}.png'.format(start + offset + 1)),
-                                channels_first=True, resize_dim=image_size)
+                               channels_first=True, resize_dim=image_size)
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
                 B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
             elif batch_type == 'semseg':
                 x = resize_tensor(np.load(join(data_dir, '{:06d}.npz'.format(start + offset)))['arr_0'][0],
-                                    new_size=image_size)
+                                  new_size=image_size)
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
                 B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
         B_ff[b, :, 0, :, :] = x
