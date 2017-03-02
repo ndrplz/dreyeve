@@ -1,13 +1,13 @@
 import numpy as np
 
-from config import dreyeve_dir
+from config import dreyeve_dir, frame_size_before_crop
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
 from random import choice
 from os.path import join
 
 from utils import palette
-from computer_vision_utils.io_helper import read_image
+from computer_vision_utils.io_helper import read_image, normalize
 from computer_vision_utils.stitching import stitch_together
 from computer_vision_utils.tensor_manipulation import resize_tensor, crop_tensor
 
@@ -26,8 +26,9 @@ def sample_signature(sequences, allowed_frames, image_size):
     :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2)
     """
     h, w = image_size
-    h_c = h // 2
-    w_c = w // 2
+    h_c = h // 4
+    w_c = w // 4
+    h_before_crop, w_before_crop = frame_size_before_crop
 
     # get random sequence
     num_run = choice(sequences)
@@ -36,9 +37,9 @@ def sample_signature(sequences, allowed_frames, image_size):
     start = choice(allowed_frames)
 
     # get random crop
-    hc1 = np.random.randint(0, h - h_c)
+    hc1 = np.random.randint(0, h_before_crop - h_c)
     hc2 = hc1 + h_c
-    wc1 = np.random.randint(0, w - w_c)
+    wc1 = np.random.randint(0, w_before_crop - w_c)
     wc2 = wc1 + w_c
 
     return tuple((num_run, start, hc1, hc2, wc1, wc2))
@@ -59,8 +60,8 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
 
     batchsize = len(signatures)
     h, w = image_size
-    h_s = h_c = h // 2
-    w_s = w_c = w // 2
+    h_s = h_c = h // 4
+    w_s = w_c = w // 4
 
     if batch_type == 'image':
         B_ff = np.zeros(shape=(batchsize, 3, 1, h, w), dtype=np.float32)
@@ -91,18 +92,28 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
                 x = read_image(join(data_dir, '{:06d}.jpg'.format(start + offset)),
                                channels_first=True, resize_dim=image_size) - mean_image
 
+                # resize to (256, 256) before cropping
+                x_before_crop = resize_tensor(x, new_size=frame_size_before_crop)
+
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
-                B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
+                B_c[b, :, offset, :, :] = crop_tensor(x_before_crop, indexes=(hc1, hc2, wc1, wc2))
             elif batch_type == 'optical_flow':
                 x = read_image(join(data_dir, '{:06d}.png'.format(start + offset + 1)),
                                channels_first=True, resize_dim=image_size)
+
+                # resize to (256, 256) before cropping
+                x_before_crop = resize_tensor(x, new_size=frame_size_before_crop)
+
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
-                B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
+                B_c[b, :, offset, :, :] = crop_tensor(x_before_crop, indexes=(hc1, hc2, wc1, wc2))
             elif batch_type == 'semseg':
                 x = resize_tensor(np.load(join(data_dir, '{:06d}.npz'.format(start + offset)))['arr_0'][0],
                                   new_size=image_size)
+                # resize to (256, 256) before cropping
+                x_before_crop = resize_tensor(x, new_size=frame_size_before_crop)
+
                 B_s[b, :, offset, :, :] = resize_tensor(x, new_size=(h_s, w_s))
-                B_c[b, :, offset, :, :] = crop_tensor(x, indexes=(hc1, hc2, wc1, wc2))
+                B_c[b, :, offset, :, :] = crop_tensor(x_before_crop, indexes=(hc1, hc2, wc1, wc2))
         B_ff[b, :, 0, :, :] = x
 
     return [B_ff, B_s, B_c]
@@ -122,8 +133,8 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
 
     batchsize = len(signatures)
     h, w = image_size
-    h_c = h // 2
-    w_c = w // 2
+    h_c = h // 4
+    w_c = w // 4
 
     Y = np.zeros(shape=(batchsize, 1, h, w), dtype=np.float32)
     Y_c = np.zeros(shape=(batchsize, 1, h_c, w_c), dtype=np.float32)
@@ -136,8 +147,12 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
         # saliency
         y = read_image(join(y_dir, '{:06d}.png'.format(start + nb_frames - 1)),
                        channels_first=True, color=False, resize_dim=image_size)
+
+        # resize to (256, 256) before cropping
+        y_before_crop = resize_tensor(np.expand_dims(y, axis=0), new_size=frame_size_before_crop)
+
         Y[b, 0, :, :] = y
-        Y_c[b, 0, :, :] = crop_tensor(np.expand_dims(y, axis=0), indexes=(hc1, hc2, wc1, wc2))[0]
+        Y_c[b, 0, :, :] = crop_tensor(y_before_crop, indexes=(hc1, hc2, wc1, wc2))[0]
 
     return [Y, Y_c]
 
@@ -374,10 +389,10 @@ def visualize_batch(X, Y):
 
             # we have to turn y to 3 channels 255 for stitching
             y = Y[b, 0, :, :]
-            y = (np.tile(y, (3, 1, 1))*255).transpose(1, 2, 0)
+            y = (np.tile(y, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_ff = stitch_together([x, of, seg, y], layout=(2, 2), resize_dim=(540, 960))
+            stitch_ff = stitch_together([normalize(x), of, seg, y], layout=(2, 2), resize_dim=(540, 960))
 
             # CROPPED FRAME SECTION -----
             x_c = X_c[b, :, f, :, :].transpose(1, 2, 0)
@@ -393,10 +408,10 @@ def visualize_batch(X, Y):
 
             # we have to turn y to 3 channels 255 for stitching
             y_c = Y_c[b, 0, :, :]
-            y_c = (np.tile(y_c, (3, 1, 1)) * 255).transpose(1, 2, 0)
+            y_c = (np.tile(y_c, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_c = stitch_together([x_c, of_c, seg_c, y_c], layout=(2, 2), resize_dim=(540, 960))
+            stitch_c = stitch_together([normalize(x_c), of_c, seg_c, y_c], layout=(2, 2), resize_dim=(540, 960))
 
             # SMALL FRAME SECTION -----
             x_s = X_s[b, :, f, :, :].transpose(1, 2, 0)
@@ -413,15 +428,15 @@ def visualize_batch(X, Y):
             # we have to turn y to 3 channels 255 for stitching
             # also, we resize it to small (just for visualize it)
             y_s = cv2.resize(Y[b, 0, :, :], dsize=(h_s, w_s)[::-1])
-            y_s = (np.tile(y_s, (3, 1, 1)) * 255).transpose(1, 2, 0)
+            y_s = (np.tile(y_s, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_s = stitch_together([x_s, of_s, seg_s, y_s], layout=(2, 2), resize_dim=(540, 960))
+            stitch_s = stitch_together([normalize(x_s), of_s, seg_s, y_s], layout=(2, 2), resize_dim=(540, 960))
 
             # stitch the stitchs D=
-            final_stitch = stitch_together([stitch_ff, stitch_s, stitch_c], layout=(1,3), resize_dim=(810, 1440))
-            cv2.imshow('Batch_viewer', final_stitch)
-            cv2.waitKey(30)
+            final_stitch = stitch_together([stitch_ff, stitch_s, stitch_c], layout=(1, 3), resize_dim=(810, 1440))
+            cv2.imshow('Batch_viewer', final_stitch.astype(np.uint8))
+            cv2.waitKey()
 
 
 def test_load_batch():
