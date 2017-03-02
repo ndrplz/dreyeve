@@ -17,6 +17,8 @@ def saliency_loss(name, mse_beta=None):
     """
     assert name in ['mse', 'sse'], 'Unknown loss function: {}'.format(name)
 
+    # K.mean: axis can be None - in which case the mean is computed along all axes(like numpy)
+    # see http://deeplearning.net/software/theano/library/tensor/basic.html
     def mean_squared_error(y_true, y_pred):
         return K.mean(K.square(y_pred - y_true))
 
@@ -85,17 +87,17 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     :return: a Keras model
     """
     c, fr, h, w = input_shape
-    assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
+    # assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
 
-    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), pretrained=c3d_pretrained, branch=branch)
+    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 2, w // 2), pretrained=c3d_pretrained, branch=branch)
 
     # coarse + refinement
     ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
     ff_last_frame = Reshape(target_shape=(c, h, w))(ff_in)  # remove singleton dimension
-    small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
+    small_in = Input(shape=(c, fr, h // 2, w // 2), name='{}_input_small'.format(branch))
     coarse_h = c3d_encoder(small_in)
     # DVD: todo this 32x upsampling is temp
-    coarse_h = BilinearUpsampling(upsampling=32, name='{}_32x_upsampling'.format(branch))(coarse_h)
+    coarse_h = BilinearUpsampling(upsampling=16, name='{}_16x_upsampling'.format(branch))(coarse_h)
 
     fine_h = merge([coarse_h, ff_last_frame], mode='concat', concat_axis=1, name='{}_full_frame_concat'.format(branch))
     fine_h = Convolution2D(32, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv1'.format(branch))(fine_h)
@@ -108,7 +110,7 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     fine_out = Activation('relu', name='prediction_fine')(fine_h)
 
     # coarse on crop
-    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
+    crop_in = Input(shape=(c, fr, h // 2, w // 2), name='{}_input_crop'.format(branch))
     crop_h = c3d_encoder(crop_in)
     crop_h = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(crop_h)
     crop_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_crop_final_conv'.format(branch))(crop_h)

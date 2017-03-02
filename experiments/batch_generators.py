@@ -26,8 +26,8 @@ def sample_signature(sequences, allowed_frames, image_size):
     :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2)
     """
     h, w = image_size
-    h_c = h // 4
-    w_c = w // 4
+    h_c = h // 2
+    w_c = w // 2
 
     # get random sequence
     num_run = choice(sequences)
@@ -59,8 +59,8 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
 
     batchsize = len(signatures)
     h, w = image_size
-    h_s = h_c = h // 4
-    w_s = w_c = w // 4
+    h_s = h_c = h // 2
+    w_s = w_c = w // 2
 
     if batch_type == 'image':
         B_ff = np.zeros(shape=(batchsize, 3, 1, h, w), dtype=np.float32)
@@ -123,8 +123,8 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
 
     batchsize = len(signatures)
     h, w = image_size
-    h_c = h // 4
-    w_c = w // 4
+    h_c = h // 2
+    w_c = w // 2
 
     Y = np.zeros(shape=(batchsize, 1, h, w), dtype=np.float32)
     Y_c = np.zeros(shape=(batchsize, 1, h_c, w_c), dtype=np.float32)

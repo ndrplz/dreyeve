@@ -67,6 +67,7 @@ class PredictionCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs={}):
 
         if self.branch == 'image':
+            # X is [B_ff, B_s, B_c]
             X, Y = dreyeve_I_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                    mode='val', gt_type='fix')
         elif self.branch == 'optical_flow':
@@ -85,25 +86,36 @@ class PredictionCallback(keras.callbacks.Callback):
         for b in range(0, 2 * batchsize):
             # image
             if self.branch == 'image':
-                x_img = X[0][b]  # fullframe, b-th image
-                x_img = np.squeeze(x_img, axis=1).transpose(1, 2, 0)
+
+                x_ff_img = X[0][b]  # fullframe, b-th image
+                x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
+
+                x_sm_img = X[1][b][:, -1, :, :]  # resized frame (last one), b-th image
+                x_sm_img = x_sm_img.transpose(1, 2, 0)
+
+                x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
+                x_cr_img = x_cr_img.transpose(1, 2, 0)
+
             elif self.branch == 'optical_flow':
-                x_img = X[0][b]  # fullframe, b-th image
-                x_img = np.squeeze(x_img, axis=1).transpose(1, 2, 0)
+                x_ff_img = X[0][b]  # fullframe, b-th image
+                x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
             elif self.branch == 'semseg':
-                x_img = X[0][b]  # fullframe, b-th image
-                x_img = seg_to_colormap(np.argmax(np.squeeze(x_img, axis=1), axis=0))
+                x_ff_img = X[0][b]  # fullframe, b-th image
+                x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0))
 
             # prediction
-            z_img = np.tile(np.expand_dims(Z[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            z_ff_img = np.tile(np.expand_dims(Z[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            z_cr_img = np.tile(np.expand_dims(Z[1][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # groundtruth
-            y_img = np.tile(np.expand_dims(Y[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            y_ff_img = np.tile(np.expand_dims(Y[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            y_cr_img = np.tile(np.expand_dims(Y[1][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # stitch and write
-            stitch = stitch_together([normalize(x_img), z_img, y_img], layout=(1, 3))
-            write_image(join(self.out_dir_path, 'e{:02d}_{:02d}.png'.format(epoch+1, b+1)), stitch,
-                        channels_first=False)
+            stitch_ff = stitch_together([normalize(x_ff_img), z_ff_img, y_ff_img], layout=(1, 3), resize_dim=(500, 1500))
+            stitch_cr = stitch_together([normalize(x_cr_img), z_cr_img, y_cr_img], layout=(1, 3), resize_dim=(500, 1500))
+            write_image(join(self.out_dir_path, 'ff_e{:02d}_{:02d}.png'.format(epoch + 1, b + 1)), stitch_ff, channels_first=False)
+            write_image(join(self.out_dir_path, 'cr_e{:02d}_{:02d}.png'.format(epoch + 1, b + 1)), stitch_cr, channels_first=False)
 
 
 def get_callbacks(experiment_id):
