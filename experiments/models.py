@@ -63,14 +63,12 @@ def CoarseSaliencyModel(input_shape, pretrained, branch=''):
     H = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), border_mode='valid', name='pool3')(H)
     H = Convolution3D(512, 3, 3, 3, activation='relu', border_mode='same', name='conv4a', subsample=(1, 1, 1))(H)
     H = Convolution3D(512, 3, 3, 3, activation='relu', border_mode='same', name='conv4b', subsample=(1, 1, 1))(H)
-    # H = MaxPooling3D(pool_size=(4, 1, 1), strides=(4, 1, 1), border_mode='valid', name='pool4')(H)
-    H = MaxPooling3D(pool_size=(2, 2, 2), strides=(4, 2, 2), border_mode='valid', name='pool4')(H)
+    H = MaxPooling3D(pool_size=(4, 1, 1), strides=(4, 1, 1), border_mode='valid', name='pool4')(H)
     # DVD: once upon a time, this pooling had pool_size=(2, 2, 2) strides=(4, 2, 2)
 
-    # H = Reshape(target_shape=(512, h // 8, w // 8))(H)  # squeeze out temporal dimension
-    H = Reshape(target_shape=(512, h // 16, w // 16))(H)  # squeeze out temporal dimension
-    # model_out = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(H)
-    model_out = BilinearUpsampling(upsampling=16, name='{}_16x_upsampling'.format(branch))(H)
+    H = Reshape(target_shape=(512, h // 8, w // 8))(H)  # squeeze out temporal dimension
+
+    model_out = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(H)
 
     model = Model(input=model_in, output=model_out, name='{}_coarse_model'.format(branch))
 
@@ -95,12 +93,14 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
 
     coarse_predictor = CoarseSaliencyModel(input_shape=(c, fr, h // 4, w // 4), pretrained=c3d_pretrained, branch=branch)
 
-    # coarse + refinement
     ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
-    ff_last_frame = Reshape(target_shape=(c, h, w))(ff_in)  # remove singleton dimension
     small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
+    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
+
+    # coarse + refinement
+    ff_last_frame = Reshape(target_shape=(c, h, w))(ff_in)  # remove singleton dimension
     coarse_h = coarse_predictor(small_in)
-    # DVD: todo this 32x upsampling is temp
+    coarse_h = Convolution2D(1, 3, 3, border_mode='same', activation='relu')(coarse_h)
     coarse_h = BilinearUpsampling(upsampling=4, name='{}_4x_upsampling'.format(branch))(coarse_h)
 
     fine_h = merge([coarse_h, ff_last_frame], mode='concat', concat_axis=1, name='{}_full_frame_concat'.format(branch))
@@ -114,7 +114,6 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     fine_out = Activation('relu', name='prediction_fine')(fine_h)
 
     # coarse on crop
-    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
     crop_h = coarse_predictor(crop_in)
     crop_h = Convolution2D(1, 3, 3, border_mode='same', init='glorot_uniform', name='{}_crop_final_conv'.format(branch))(crop_h)
     crop_out = Activation('relu', name='prediction_crop')(crop_h)

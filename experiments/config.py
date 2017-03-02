@@ -10,7 +10,7 @@ total_frames_each_run = 7500
 log_dir = 'logs'
 
 # --- TRAIN --- #
-batchsize = 2
+batchsize = 3
 frames_per_seq = 16
 h = 448
 w = 448
@@ -24,4 +24,4 @@ w_loss_cropped = 0.5
 w_loss_fine = 1.0
 loss_str = 'mse'
 mse_beta = 0.1
-opt = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
