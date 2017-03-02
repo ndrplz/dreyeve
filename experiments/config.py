@@ -10,10 +10,10 @@ total_frames_each_run = 7500
 log_dir = 'logs'
 
 # --- TRAIN --- #
-batchsize = 3
+batchsize = 2
 frames_per_seq = 16
-h = 224
-w = 224
+h = 448
+w = 448
 train_frame_range = range(0, 3500 - frames_per_seq - 1) + range(4000, total_frames_each_run - frames_per_seq - 1)
 val_frame_range = range(3500, 4000 - frames_per_seq - 1)
 test_frame_range = range(0, total_frames_each_run-frames_per_seq - 1)

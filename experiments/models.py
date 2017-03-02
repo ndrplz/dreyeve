@@ -36,9 +36,9 @@ def saliency_loss(name, mse_beta=None):
         return sum_squared_error
 
 
-def C3DEncoder(input_shape, pretrained, branch=''):
+def CoarseSaliencyModel(input_shape, pretrained, branch=''):
     """
-    Function for constructing a C3D encoder network, used for coarse prediction in dreyeve.
+    Function for constructing a CoarseSaliencyModel network, based on C3D. Used for coarse prediction in dreyeve.
 
     :param input_shape: in the form (channels, frames, h, w)
     :param pretrained: Whether to initialize with weights pretrained on action recognition.
@@ -63,12 +63,16 @@ def C3DEncoder(input_shape, pretrained, branch=''):
     H = MaxPooling3D(pool_size=(2, 2, 2), strides=(2, 2, 2), border_mode='valid', name='pool3')(H)
     H = Convolution3D(512, 3, 3, 3, activation='relu', border_mode='same', name='conv4a', subsample=(1, 1, 1))(H)
     H = Convolution3D(512, 3, 3, 3, activation='relu', border_mode='same', name='conv4b', subsample=(1, 1, 1))(H)
-    H = MaxPooling3D(pool_size=(4, 1, 1), strides=(4, 1, 1), border_mode='valid', name='pool4')(H)
+    # H = MaxPooling3D(pool_size=(4, 1, 1), strides=(4, 1, 1), border_mode='valid', name='pool4')(H)
+    H = MaxPooling3D(pool_size=(2, 2, 2), strides=(4, 2, 2), border_mode='valid', name='pool4')(H)
     # DVD: once upon a time, this pooling had pool_size=(2, 2, 2) strides=(4, 2, 2)
 
-    model_out = Reshape(target_shape=(512, h // 8, w // 8))(H)  # squeeze out temporal dimension
+    # H = Reshape(target_shape=(512, h // 8, w // 8))(H)  # squeeze out temporal dimension
+    H = Reshape(target_shape=(512, h // 16, w // 16))(H)  # squeeze out temporal dimension
+    # model_out = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(H)
+    model_out = BilinearUpsampling(upsampling=16, name='{}_16x_upsampling'.format(branch))(H)
 
-    model = Model(input=model_in, output=model_out, name='{}_c3d_encoder'.format(branch))
+    model = Model(input=model_in, output=model_out, name='{}_coarse_model'.format(branch))
 
     if pretrained:
         weights_path = get_file('w_up2_conv4_new.h5', C3D_WEIGHTS_URL, cache_subdir='models')
@@ -89,31 +93,30 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     c, fr, h, w = input_shape
     # assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
 
-    c3d_encoder = C3DEncoder(input_shape=(c, fr, h // 4, w // 4), pretrained=c3d_pretrained, branch=branch)
+    coarse_predictor = CoarseSaliencyModel(input_shape=(c, fr, h // 4, w // 4), pretrained=c3d_pretrained, branch=branch)
 
     # coarse + refinement
     ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
     ff_last_frame = Reshape(target_shape=(c, h, w))(ff_in)  # remove singleton dimension
     small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
-    coarse_h = c3d_encoder(small_in)
+    coarse_h = coarse_predictor(small_in)
     # DVD: todo this 32x upsampling is temp
-    coarse_h = BilinearUpsampling(upsampling=32, name='{}_32x_upsampling'.format(branch))(coarse_h)
+    coarse_h = BilinearUpsampling(upsampling=4, name='{}_4x_upsampling'.format(branch))(coarse_h)
 
     fine_h = merge([coarse_h, ff_last_frame], mode='concat', concat_axis=1, name='{}_full_frame_concat'.format(branch))
     fine_h = Convolution2D(32, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv1'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
-    fine_h = Convolution2D(64, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv2'.format(branch))(fine_h)
+    fine_h = Convolution2D(16, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv2'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
-    fine_h = Convolution2D(128, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv3'.format(branch))(fine_h)
+    fine_h = Convolution2D(8, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv3'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
-    fine_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_refine_conv4'.format(branch))(fine_h)
+    fine_h = Convolution2D(1, 3, 3, border_mode='same', init='glorot_uniform', name='{}_refine_conv4'.format(branch))(fine_h)
     fine_out = Activation('relu', name='prediction_fine')(fine_h)
 
     # coarse on crop
     crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
-    crop_h = c3d_encoder(crop_in)
-    crop_h = BilinearUpsampling(upsampling=8, name='{}_8x_upsampling'.format(branch))(crop_h)
-    crop_h = Convolution2D(1, 1, 1, border_mode='same', init='he_normal', name='{}_crop_final_conv'.format(branch))(crop_h)
+    crop_h = coarse_predictor(crop_in)
+    crop_h = Convolution2D(1, 3, 3, border_mode='same', init='glorot_uniform', name='{}_crop_final_conv'.format(branch))(crop_h)
     crop_out = Activation('relu', name='prediction_crop')(crop_h)
 
     model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
