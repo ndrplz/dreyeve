@@ -23,7 +23,7 @@ def sample_signature(sequences, allowed_frames, image_size):
     :param sequences: sequences to sample from
     :param allowed_frames: range of allowed frames to sample the sequence start from.
     :param image_size: in the form (h,w). Needed to crop randomly
-    :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2)
+    :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2, do_mirror)
     """
     h, w = image_size
     h_c = h // 4
@@ -42,7 +42,9 @@ def sample_signature(sequences, allowed_frames, image_size):
     wc1 = np.random.randint(0, w_before_crop - w_c)
     wc2 = wc1 + w_c
 
-    return tuple((num_run, start, hc1, hc2, wc1, wc2))
+    do_mirror = choice([True, False])
+
+    return tuple((num_run, start, hc1, hc2, wc1, wc2, do_mirror))
 
 
 def load_batch_data(signatures, nb_frames, image_size, batch_type):
@@ -83,7 +85,7 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
 
     for b in range(batchsize):
         # retrieve the signature
-        num_run, start, hc1, hc2, wc1, wc2 = signatures[b]
+        num_run, start, hc1, hc2, wc1, wc2, do_mirror = signatures[b]
 
         data_dir = join(dreyeve_dir, '{:02d}'.format(num_run), subdir)
 
@@ -116,6 +118,11 @@ def load_batch_data(signatures, nb_frames, image_size, batch_type):
                 B_c[b, :, offset, :, :] = crop_tensor(x_before_crop, indexes=(hc1, hc2, wc1, wc2))
         B_ff[b, :, 0, :, :] = x
 
+        if do_mirror:
+            B_ff = B_ff[:, :, :, :, ::-1]
+            B_s = B_s[:, :, :, :, ::-1]
+            B_c = B_c[:, :, :, :, ::-1]
+
     return [B_ff, B_s, B_c]
 
 
@@ -141,7 +148,7 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
 
     for b in range(0, batchsize):
         # retrieve the signature
-        num_run, start, hc1, hc2, wc1, wc2 = signatures[b]
+        num_run, start, hc1, hc2, wc1, wc2, do_mirror = signatures[b]
 
         y_dir = join(dreyeve_dir, '{:02d}'.format(num_run), 'saliency' if gt_type == 'sal' else 'saliency_fix')
         # saliency
@@ -153,6 +160,10 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
 
         Y[b, 0, :, :] = y
         Y_c[b, 0, :, :] = crop_tensor(y_before_crop, indexes=(hc1, hc2, wc1, wc2))[0]
+
+        if do_mirror:
+            Y = Y[:, :, :, ::-1]
+            Y_c = Y_c[:, :, :, ::-1]
 
     return [Y, Y_c]
 
