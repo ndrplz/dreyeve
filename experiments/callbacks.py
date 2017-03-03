@@ -90,12 +90,6 @@ class PredictionCallback(keras.callbacks.Callback):
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
 
-                x_sm_img = X[1][b][:, -1, :, :]  # resized frame (last one), b-th image
-                x_sm_img = x_sm_img.transpose(1, 2, 0)
-
-                x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
-                x_cr_img = x_cr_img.transpose(1, 2, 0)
-
             elif self.branch == 'optical_flow':
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
@@ -103,9 +97,15 @@ class PredictionCallback(keras.callbacks.Callback):
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0))
 
+            x_sm_img = X[1][b][:, -1, :, :]  # resized frame (last one), b-th image
+            x_sm_img = x_sm_img.transpose(1, 2, 0)
+
+            x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
+            x_cr_img = x_cr_img.transpose(1, 2, 0)
+
             # prediction
-            z_ff_img = np.tile(np.expand_dims(Z[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
-            z_cr_img = np.tile(np.expand_dims(Z[1][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            z_ff_img = np.tile(np.expand_dims(normalize(Z[0][b, 0]), axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            z_cr_img = np.tile(np.expand_dims(normalize(Z[1][b, 0]), axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # groundtruth
             y_ff_img = np.tile(np.expand_dims(Y[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
