@@ -16,13 +16,14 @@ from time import time
 import cv2
 
 
-def sample_signature(sequences, allowed_frames, image_size):
+def sample_signature(sequences, allowed_frames, image_size, allow_mirror):
     """
     Function to create a unique batch signature.
 
     :param sequences: sequences to sample from
     :param allowed_frames: range of allowed frames to sample the sequence start from.
     :param image_size: in the form (h,w). Needed to crop randomly
+    :param allow_mirror: whether or not to enable random mirroring
     :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2, do_mirror)
     """
     h, w = image_size
@@ -42,7 +43,7 @@ def sample_signature(sequences, allowed_frames, image_size):
     wc1 = np.random.randint(0, w_before_crop - w_c)
     wc2 = wc1 + w_c
 
-    do_mirror = choice([True, False])
+    do_mirror = choice([True, False]) if allow_mirror else False
 
     return tuple((num_run, start, hc1, hc2, wc1, wc2, do_mirror))
 
@@ -184,18 +185,21 @@ def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     if mode == 'train':
         sequences = dreyeve_train_seq
         allowed_frames = train_frame_range
+        allow_mirror = True
     elif mode == 'val':
         sequences = dreyeve_train_seq
         allowed_frames = val_frame_range
+        allow_mirror = False
     elif mode == 'test':
         sequences = dreyeve_test_seq
         allowed_frames = test_frame_range
+        allow_mirror = False
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
-                                           image_size=image_size))
+                                           image_size=image_size, allow_mirror=allow_mirror))
 
     # get an image batch
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
@@ -219,18 +223,21 @@ def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     if mode == 'train':
         sequences = dreyeve_train_seq
         allowed_frames = train_frame_range
+        allow_mirror = True
     elif mode == 'val':
         sequences = dreyeve_train_seq
         allowed_frames = val_frame_range
+        allow_mirror = False
     elif mode == 'test':
         sequences = dreyeve_test_seq
         allowed_frames = test_frame_range
+        allow_mirror = False
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
-                                           image_size=image_size))
+                                           image_size=image_size, allow_mirror=allow_mirror))
 
     # get an optical flow batch
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
@@ -254,18 +261,21 @@ def dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     if mode == 'train':
         sequences = dreyeve_train_seq
         allowed_frames = train_frame_range
+        allow_mirror = True
     elif mode == 'val':
         sequences = dreyeve_train_seq
         allowed_frames = val_frame_range
+        allow_mirror = False
     elif mode == 'test':
         sequences = dreyeve_test_seq
         allowed_frames = test_frame_range
+        allow_mirror = False
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
-                                           image_size=image_size))
+                                           image_size=image_size, allow_mirror=allow_mirror))
 
     # get an segmentation batch
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')
@@ -289,18 +299,21 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     if mode == 'train':
         sequences = dreyeve_train_seq
         allowed_frames = train_frame_range
+        allow_mirror = True
     elif mode == 'val':
         sequences = dreyeve_train_seq
         allowed_frames = val_frame_range
+        allow_mirror = False
     elif mode == 'test':
         sequences = dreyeve_test_seq
         allowed_frames = test_frame_range
+        allow_mirror = False
 
     # generate batch signatures
     signatures = []
     for b in range(0, batchsize):
         signatures.append(sample_signature(sequences=sequences, allowed_frames=allowed_frames,
-                                           image_size=image_size))
+                                           image_size=image_size, allow_mirror=allow_mirror))
 
     # get all batches
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
@@ -455,7 +468,7 @@ def test_load_batch():
     Helper function, to load and visualize a dreyeve batch
     """
     t = time()
-    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='val', gt_type='fix')
+    X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
     elapsed = time() - t
 
     print 'Batch loaded in {} seconds.'.format(elapsed)
