@@ -54,7 +54,7 @@ def train_flow_branch():
 
     experiment_id = 'FLOW_{}'.format(uuid.uuid4())
 
-    model = FlavorBranch(input_shape=(3, frames_per_seq, h, w), branch='flow')
+    model = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='flow')
     model.compile(optimizer=opt,
                   loss={'prediction_fine': saliency_loss(name=full_frame_loss),
                         'prediction_crop': saliency_loss(name=crop_loss)},

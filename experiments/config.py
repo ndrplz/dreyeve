@@ -10,7 +10,7 @@ total_frames_each_run = 7500
 log_dir = 'logs'
 
 # --- TRAIN --- #
-batchsize = 32
+batchsize = 3
 frames_per_seq = 16
 h = 448
 w = 448
@@ -29,4 +29,4 @@ opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 simo_mode = False  # DVD: works only with full_frame_loss = 'simo'
 
 # callbacks
-callback_batchsize = 16
+callback_batchsize = 3
