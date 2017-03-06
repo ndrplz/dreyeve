@@ -10,20 +10,23 @@ total_frames_each_run = 7500
 log_dir = 'logs'
 
 # --- TRAIN --- #
-batchsize = 3
+batchsize = 32
 frames_per_seq = 16
 h = 448
 w = 448
 train_frame_range = range(0, 3500 - frames_per_seq - 1) + range(4000, total_frames_each_run - frames_per_seq - 1)
 val_frame_range = range(3500, 4000 - frames_per_seq - 1)
 test_frame_range = range(0, total_frames_each_run-frames_per_seq - 1)
-
 frame_size_before_crop = (256, 256)
 
-w_loss_cropped = 0.5
+# optimizer
+full_frame_loss = 'kld'
+crop_loss = 'kld'
+w_loss_cropped = 1.0
 w_loss_fine = 1.0
-full_frame_loss = 'mse'
-crop_loss = 'mse'
 mse_beta = 0.1
 opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 simo_mode = False  # DVD: works only with full_frame_loss = 'simo'
+
+# callbacks
+callback_batchsize = 16

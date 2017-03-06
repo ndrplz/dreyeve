@@ -1,16 +1,13 @@
 import keras.callbacks
 import numpy as np
-import cv2
 import os
 
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from computer_vision_utils.stitching import stitch_together
 
-from config import batchsize, frames_per_seq, h, w, log_dir
 from keras.callbacks import ReduceLROnPlateau, CSVLogger
 from computer_vision_utils.io_helper import write_image, normalize
-from config import batchsize, frames_per_seq, h, w
-from keras.callbacks import ReduceLROnPlateau
+from config import frames_per_seq, h, w, log_dir, callback_batchsize
 from utils import seg_to_colormap
 from os.path import join, exists
 
@@ -68,22 +65,22 @@ class PredictionCallback(keras.callbacks.Callback):
 
         if self.branch == 'image':
             # X is [B_ff, B_s, B_c]
-            X, Y = dreyeve_I_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_I_batch(batchsize=callback_batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                    mode='val', gt_type='fix')
         elif self.branch == 'optical_flow':
-            X, Y = dreyeve_OF_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_OF_batch(batchsize=callback_batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                     mode='val', gt_type='fix')
         elif self.branch == 'semseg':
-            X, Y = dreyeve_SEG_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_SEG_batch(batchsize=callback_batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                      mode='val', gt_type='fix')
         elif self.branch == 'all':
-            X, Y = dreyeve_batch(batchsize=2 * batchsize, nb_frames=frames_per_seq, image_size=(h, w),
+            X, Y = dreyeve_batch(batchsize=callback_batchsize, nb_frames=frames_per_seq, image_size=(h, w),
                                  mode='val', gt_type='fix')
 
         # predict batch
         Z = self.model.predict(X)
 
-        for b in range(0, 2 * batchsize):
+        for b in range(0, callback_batchsize):
             # image
             if self.branch == 'image':
 
