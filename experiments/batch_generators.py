@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import dreyeve_dir, frame_size_before_crop, simo_mode, total_frames_each_run
+from config import dreyeve_dir, frame_size_before_crop, simo_mode, total_frames_each_run, force_sample_steering
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
 from random import choice
@@ -35,17 +35,18 @@ def sample_signature(sequences, allowed_frames, image_size, allow_mirror):
     num_run = choice(sequences)
 
     # get random start of sequence
-    steering_dir_file = join(dreyeve_dir, '{:02d}'.format(num_run), 'steering_directions.txt')
-    steering_dirs = read_lines_from_file(steering_dir_file)
-    p = np.zeros(len(steering_dirs))
-    mask = np.zeros(len(steering_dirs))
-    prob_straight = 1 - float(len([s for s in steering_dirs if s == 'STRAIGHT'])) / len(steering_dirs)
-    prob_left = 1 - float(len([s for s in steering_dirs if s == 'LEFT'])) / len(steering_dirs)
-    prob_right = 1 - float(len([s for s in steering_dirs if s == 'RIGHT'])) / len(steering_dirs)
-    p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'STRAIGHT']] = prob_straight
-    p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'LEFT']] = prob_left
-    p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'RIGHT']] = prob_right
+    p = np.ones(total_frames_each_run)
+    mask = np.zeros(total_frames_each_run)
     mask[np.array(allowed_frames)] = 1
+    if force_sample_steering:
+        steering_dir_file = join(dreyeve_dir, '{:02d}'.format(num_run), 'steering_directions.txt')
+        steering_dirs = read_lines_from_file(steering_dir_file)
+        prob_straight = 1 - float(len([s for s in steering_dirs if s == 'STRAIGHT'])) / len(steering_dirs)
+        prob_left = 1 - float(len([s for s in steering_dirs if s == 'LEFT'])) / len(steering_dirs)
+        prob_right = 1 - float(len([s for s in steering_dirs if s == 'RIGHT'])) / len(steering_dirs)
+        p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'STRAIGHT']] = prob_straight
+        p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'LEFT']] = prob_left
+        p[[i for i in xrange(0, len(steering_dirs)) if steering_dirs[i] == 'RIGHT']] = prob_right
     p *= mask
     p /= np.sum(p)
     start = np.random.choice(range(0, total_frames_each_run), p=p)

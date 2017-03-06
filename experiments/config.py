@@ -19,6 +19,8 @@ val_frame_range = range(3500, 4000 - frames_per_seq - 1)
 test_frame_range = range(0, total_frames_each_run-frames_per_seq - 1)
 frame_size_before_crop = (256, 256)
 
+force_sample_steering = False
+
 # optimizer
 full_frame_loss = 'kld'
 crop_loss = 'kld'
