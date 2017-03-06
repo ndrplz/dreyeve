@@ -83,22 +83,23 @@ class PredictionCallback(keras.callbacks.Callback):
         for b in range(0, callback_batchsize):
             # image
             if self.branch == 'image':
-
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
 
+                x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
+                x_cr_img = x_cr_img.transpose(1, 2, 0)
             elif self.branch == 'optical_flow':
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
+
+                x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
+                x_cr_img = x_cr_img.transpose(1, 2, 0)
             elif self.branch == 'semseg':
                 x_ff_img = X[0][b]  # fullframe, b-th image
-                x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0), channels_first=True)
+                x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0), channels_first=False)
 
-            x_sm_img = X[1][b][:, -1, :, :]  # resized frame (last one), b-th image
-            x_sm_img = x_sm_img.transpose(1, 2, 0)
-
-            x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
-            x_cr_img = x_cr_img.transpose(1, 2, 0)
+                x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
+                x_cr_img = seg_to_colormap(np.argmax(x_cr_img, axis=0), channels_first=False)
 
             # prediction
             z_ff_img = np.tile(np.expand_dims(normalize(Z[0][b, 0]), axis=2), reps=(1, 1, 3)).astype(np.uint8)
