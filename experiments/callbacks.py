@@ -108,8 +108,8 @@ class PredictionCallback(keras.callbacks.Callback):
             z_cr_img = np.tile(np.expand_dims(normalize(Z[1][b, 0]), axis=2), reps=(1, 1, 3)).astype(np.uint8)
 
             # groundtruth
-            y_ff_img = np.tile(np.expand_dims(Y[0][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
-            y_cr_img = np.tile(np.expand_dims(Y[1][b, 0], axis=2), reps=(1, 1, 3)).astype(np.uint8)
+            y_ff_img = np.tile(np.expand_dims(normalize(Y[0][b, 0]), axis=2), reps=(1, 1, 3))
+            y_cr_img = np.tile(np.expand_dims(normalize(Y[1][b, 0]), axis=2), reps=(1, 1, 3))
 
             # stitch and write
             stitch_ff = stitch_together([normalize(x_ff_img), z_ff_img, y_ff_img], layout=(1, 3), resize_dim=(500, 1500))

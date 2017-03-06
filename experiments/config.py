@@ -22,6 +22,8 @@ frame_size_before_crop = (256, 256)
 
 w_loss_cropped = 0.5
 w_loss_fine = 1.0
-loss_str = 'mse'
+full_frame_loss = 'mse'
+crop_loss = 'mse'
 mse_beta = 0.1
 opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
+simo_mode = False  # DVD: works only with full_frame_loss = 'simo'

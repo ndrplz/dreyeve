@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import dreyeve_dir, frame_size_before_crop
+from config import dreyeve_dir, frame_size_before_crop, simo_mode
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
 from random import choice
@@ -169,6 +169,52 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
     return [Y, Y_c]
 
 
+def load_saliency_data_simo(signatures, nb_frames, image_size):
+    """
+    Crop -> NSS with fixations
+    Fine -> KLD with saliency maps and IG with fixations (baseline is saliency maps)
+
+    :param signatures: sample signatures, previously evaluated. List of tuples like
+                    (num_run, start, hc1, hc2, wc1, wc2). The list is batchsize signatures long.
+    :param nb_frames: number of temporal frames in each sample
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image
+    :return: a tuple holding the fullframe and the cropped saliency
+    """
+
+    batchsize = len(signatures)
+    h, w = image_size
+    h_c = h // 4
+    w_c = w // 4
+
+    Y = np.zeros(shape=(batchsize, 2, h, w), dtype=np.float32)
+    Y_c = np.zeros(shape=(batchsize, 1, h_c, w_c), dtype=np.float32)
+
+    for b in range(0, batchsize):
+        # retrieve the signature
+        num_run, start, hc1, hc2, wc1, wc2, do_mirror = signatures[b]
+
+        y_dir_sal = join(dreyeve_dir, '{:02d}'.format(num_run), 'saliency')
+        y_dir_fix = join(dreyeve_dir, '{:02d}'.format(num_run), 'saliency_fix')
+        # saliency
+        y_sal = read_image(join(y_dir_sal, '{:06d}.png'.format(start + nb_frames - 1)),
+                           channels_first=True, color=False, resize_dim=image_size) / 255
+        y_fix = read_image(join(y_dir_fix, '{:06d}.png'.format(start + nb_frames - 1)),
+                           channels_first=True, color=False, resize_dim=image_size) / 255
+
+        # resize to (256, 256) before cropping
+        y_before_crop = resize_tensor(np.expand_dims(y_fix, axis=0), new_size=frame_size_before_crop)
+
+        Y[b, 0, :, :] = y_sal
+        Y[b, 1, :, :] = y_fix
+        Y_c[b, 0, :, :] = crop_tensor(y_before_crop, indexes=(hc1, hc2, wc1, wc2))[0]
+
+        if do_mirror:
+            Y = Y[:, :, :, ::-1]
+            Y_c = Y_c[:, :, :, ::-1]
+
+    return [Y, Y_c]
+
+
 def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to load a Dreyeve batch of only images
@@ -203,7 +249,10 @@ def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
     # get an image batch
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
-    Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
+    if simo_mode:
+        Y = load_saliency_data_simo(signatures=signatures, nb_frames=nb_frames, image_size=image_size)
+    else:
+        Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
     return I, Y
 
 
@@ -241,7 +290,10 @@ def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
     # get an optical flow batch
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
-    Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
+    if simo_mode:
+        Y = load_saliency_data_simo(signatures=signatures, nb_frames=nb_frames, image_size=image_size)
+    else:
+        Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
     return OF, Y
 
 
@@ -279,7 +331,10 @@ def dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
     # get an segmentation batch
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')
-    Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
+    if simo_mode:
+        Y = load_saliency_data_simo(signatures=signatures, nb_frames=nb_frames, image_size=image_size)
+    else:
+        Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
     return SEG, Y
 
 
@@ -319,7 +374,10 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     I = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='image')
     OF = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='optical_flow')
     SEG = load_batch_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, batch_type='semseg')
-    Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
+    if simo_mode:
+        Y = load_saliency_data_simo(signatures=signatures, nb_frames=nb_frames, image_size=image_size)
+    else:
+        Y = load_saliency_data(signatures=signatures, nb_frames=nb_frames, image_size=image_size, gt_type=gt_type)
     return I + OF + SEG, Y  # list "+" concatenates
 
 
@@ -416,7 +474,7 @@ def visualize_batch(X, Y):
             y = (np.tile(y, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_ff = stitch_together([normalize(x), of, seg, y], layout=(2, 2), resize_dim=(540, 960))
+            stitch_ff = stitch_together([normalize(x), of, seg, normalize(y)], layout=(2, 2), resize_dim=(540, 960))
 
             # CROPPED FRAME SECTION -----
             x_c = X_c[b, :, f, :, :].transpose(1, 2, 0)
@@ -435,7 +493,7 @@ def visualize_batch(X, Y):
             y_c = (np.tile(y_c, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_c = stitch_together([normalize(x_c), of_c, seg_c, y_c], layout=(2, 2), resize_dim=(540, 960))
+            stitch_c = stitch_together([normalize(x_c), of_c, seg_c, normalize(y_c)], layout=(2, 2), resize_dim=(540, 960))
 
             # SMALL FRAME SECTION -----
             x_s = X_s[b, :, f, :, :].transpose(1, 2, 0)
@@ -455,7 +513,7 @@ def visualize_batch(X, Y):
             y_s = (np.tile(y_s, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_s = stitch_together([normalize(x_s), of_s, seg_s, y_s], layout=(2, 2), resize_dim=(540, 960))
+            stitch_s = stitch_together([normalize(x_s), of_s, seg_s, normalize(y_s)], layout=(2, 2), resize_dim=(540, 960))
 
             # stitch the stitchs D=
             final_stitch = stitch_together([stitch_ff, stitch_s, stitch_c], layout=(1, 3), resize_dim=(810, 1440))

@@ -4,6 +4,8 @@ from keras.layers import Input, Convolution3D, MaxPooling3D, Convolution2D, Resh
 from keras.utils.data_utils import get_file
 from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 
+from config import simo_mode
+
 
 C3D_WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/c3d_weights/w_up2_conv4_new.h5'
 
@@ -15,7 +17,7 @@ def saliency_loss(name, mse_beta=None):
     TODO: have more functions you can choose with a string parameter
     :return: the loss symbolic function
     """
-    assert name in ['mse', 'sse'], 'Unknown loss function: {}'.format(name)
+    assert name in ['mse', 'sse', 'nss', 'simo', 'kld'], 'Unknown loss function: {}'.format(name)
 
     # K.mean: axis can be None - in which case the mean is computed along all axes(like numpy)
     # see http://deeplearning.net/software/theano/library/tensor/basic.html
@@ -28,12 +30,124 @@ def saliency_loss(name, mse_beta=None):
     def sum_squared_error(y_true, y_pred):
         return K.sum(K.square(y_pred - y_true))
 
+    def kullback_leibler_divergence(y_true, y_pred, eps=K.epsilon()):
+        """
+        Kullback-Leiber divergence (sec 4.2.3 of [1]). Assumes shape (b, 1, h, w) for all tensors.
+
+        :param y_true: groundtruth
+        :param y_pred: prediction
+        :param eps: regularization epsilon
+        :return: loss value (one symbolic value per batch element)
+        """
+        P = y_pred
+        P = P / (K.epsilon() + K.sum(P, axis=[1, 2, 3], keepdims=True))
+        Q = y_true
+        Q = Q / (K.epsilon() + K.sum(Q, axis=[1, 2, 3], keepdims=True))
+
+        kld = K.sum(Q * K.log(eps + Q/(eps + P)), axis=[1, 2, 3])
+
+        return kld
+
+    def information_gain(y_true, y_pred, y_base, eps=K.epsilon()):
+        """
+        Information gain (sec 4.1.3 of [1]). Assumes shape (b, 1, h, w) for all tensors.
+
+        :param y_true: groundtruth
+        :param y_pred: prediction
+        :param y_base: baseline
+        :param eps: regularization epsilon
+        :return: loss value (one symbolic value per batch element)
+        """
+        P = y_pred
+        P = P / (K.epsilon() + K.max(P, axis=[1, 2, 3], keepdims=True))
+        Q = y_true
+        B = y_base
+
+        Qb = K.round(Q)  # discretize at 0.5
+        N = K.sum(Qb, axis=[1, 2, 3], keepdims=True)
+
+        ig = K.sum(Qb*(K.log(eps + P) / K.log(2) - K.log(eps + B) / K.log(2)), axis=[1, 2, 3]) / (K.epsilon() + N)
+
+        return ig
+
+    def normalized_scanpath_saliency(y_true, y_pred):
+        """
+        Normalized Scanpath Saliency (sec 4.1.2 of [1]). Assumes shape (b, 1, h, w) for all tensors.
+
+        :param y_true: groundtruth
+        :param y_pred: prediction
+        :return: loss value (one symbolic value per batch element)
+        """
+        P = y_pred
+        P = P / (K.epsilon() + K.max(P, axis=[1, 2, 3], keepdims=True))
+        Q = y_true
+
+        Qb = K.round(Q)  # discretize at 0.5
+        N = K.sum(Qb, axis=[1, 2, 3], keepdims=True)
+
+        mu_P = K.mean(P, axis=[1, 2, 3], keepdims=True)
+        std_P = K.std(P, axis=[1, 2, 3], keepdims=True)
+        P_sign = (P - mu_P) / (K.epsilon() + std_P)
+
+        nss = (P_sign * Qb) / (K.epsilon() + N)
+        nss = K.sum(nss, axis=[1, 2, 3])
+
+        return -nss  # maximize nss
+
+    def simo_loss(y_true, y_pred):
+        """
+        Loss defined by simo. Assumes shape (b, 2, h, w) for all tensors.
+        y[:, 0, :, :] is saliency, we want KLD for saliency.
+        y[:, 1, :, :] is fixation, we want IG for fixation using saliency groundtruth as baseline.
+
+        :param y_true: groundtruth
+        :param y_pred: prediction
+        :return: loss value (one symbolic value per batch element)
+        """
+
+        y_true_sal = y_true[:, 0:1, :, :]
+        y_true_fix = y_true[:, 1:, :, :]
+
+        y_pred_sal = y_pred[:, 0:1, :, :]
+        y_pred_fix = y_pred[:, 1:, :, :]
+
+        return kullback_leibler_divergence(y_true_sal, y_pred_sal) - \
+               information_gain(y_true_fix, y_pred_fix, y_true_sal)  # maximize information gain over baseline
+
+    def nss_marcy(y_true, y_pred):
+        max_y_pred = K.repeat_elements(
+            K.expand_dims(K.repeat_elements(K.expand_dims(K.max(K.max(y_pred, axis=2), axis=2)), 448, axis=-1)),
+            448, axis=-1)
+        y_pred /= max_y_pred
+
+        y_pred_flatten = K.batch_flatten(y_pred)
+
+        y_mean = K.mean(y_pred_flatten, axis=-1)
+        y_mean = K.repeat_elements(
+            K.expand_dims(K.repeat_elements(K.expand_dims(K.expand_dims(y_mean)), 448, axis=-1)), 448,
+            axis=-1)
+
+        y_std = K.std(y_pred_flatten, axis=-1)
+        y_std = K.repeat_elements(
+            K.expand_dims(K.repeat_elements(K.expand_dims(K.expand_dims(y_std)), 448, axis=-1)), 448,
+            axis=-1)
+
+        y_pred = (y_pred - y_mean) / (y_std + K.epsilon())
+
+        return -(K.sum(K.sum(y_true * y_pred, axis=2), axis=2) / K.sum(K.sum(y_true, axis=2), axis=2))
+
     if name == 'mse' and mse_beta is not None:
         return weighted_mean_squared_error
     elif name == 'mse' and mse_beta is None:
         return mean_squared_error
     elif name == 'sse':
         return sum_squared_error
+    elif name == 'nss':
+        return normalized_scanpath_saliency
+    elif name == 'simo':
+        return simo_loss
+    elif name == 'kld':
+        return kullback_leibler_divergence
 
 
 def CoarseSaliencyModel(input_shape, pretrained, branch=''):
@@ -111,7 +225,15 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     fine_h = Convolution2D(8, 3, 3, border_mode='same', init='he_normal', name='{}_refine_conv3'.format(branch))(fine_h)
     fine_h = LeakyReLU(alpha=.001)(fine_h)
     fine_h = Convolution2D(1, 3, 3, border_mode='same', init='glorot_uniform', name='{}_refine_conv4'.format(branch))(fine_h)
-    fine_out = Activation('relu', name='prediction_fine')(fine_h)
+    fine_out = Activation('relu')(fine_h)
+
+    # repeat fine_out tensor along axis=1, since we have two loss
+    # DVD: this output shape is hardcoded, but should be fine
+    if simo_mode:
+        fine_out = Lambda(lambda x: K.repeat_elements(x, rep=2, axis=1),
+                          output_shape=(2, h, w), name='prediction_fine')(fine_out)
+    else:
+        fine_out = Activation('linear', name='prediction_fine')(fine_out)
 
     # coarse on crop
     crop_h = coarse_predictor(crop_in)
@@ -168,5 +290,16 @@ def DreyeveNet(frames_per_seq, h, w):
 
 
 if __name__ == '__main__':
-    model = DreyeveNet(frames_per_seq=16, h=448, w=800)
+    model = SimpleSaliencyModel(input_shape=(3, 16, 448, 448), c3d_pretrained=True, branch='image')
     model.summary()
+
+
+"""
+REFERENCES:
+[1] @article{salMetrics_Bylinskii,
+  title     = {What do different evaluation metrics tell us about saliency models?},
+  author    = {Zoya Bylinskii and Tilke Judd and Aude Oliva and Antonio Torralba and Fr{\'e}do Durand},
+  journal   = {arXiv preprint arXiv:1604.03605},
+  year      = {2016}
+}
+"""
