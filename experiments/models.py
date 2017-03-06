@@ -14,7 +14,8 @@ def saliency_loss(name, mse_beta=None):
     """
     Returns loss for the saliency task.
 
-    TODO: have more functions you can choose with a string parameter
+    :param name: string identifier of loss function
+    :param mse_beta: regularizer for weighted mse
     :return: the loss symbolic function
     """
     assert name in ['mse', 'sse', 'nss', 'simo', 'kld'], 'Unknown loss function: {}'.format(name)
