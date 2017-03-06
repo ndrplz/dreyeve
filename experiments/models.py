@@ -1,6 +1,7 @@
 import keras.backend as K
 from keras.models import Model
-from keras.layers import Input, Convolution3D, MaxPooling3D, Convolution2D, Reshape, Activation, merge, LeakyReLU, Lambda
+from keras.layers import Input, Reshape, Activation, merge, LeakyReLU, Lambda, Flatten
+from keras.layers import Dense, Convolution3D, MaxPooling3D, Convolution2D, MaxPooling2D
 from keras.utils.data_utils import get_file
 from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 
@@ -242,7 +243,56 @@ def SaliencyBranch(input_shape, c3d_pretrained, branch=''):
     crop_out = Activation('relu', name='prediction_crop')(crop_h)
 
     model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
-                  name='{}_saliency_model'.format(branch))
+                  name='{}_saliency_branch'.format(branch))
+
+    return model
+
+
+def FlavorBranch(input_shape, branch=''):
+    """
+    Function for constructing a support branch (tried for optical flow). This will be a single branch
+    of the final DreyeveNet.
+
+    :param input_shape: in the form (channels, frames, h, w). h and w refer to the fullframe size.
+    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
+    :return: a Keras model
+    """
+    c, fr, h, w = input_shape
+
+    def DenseEncoder():
+        """
+        Function that builds a simple dense encoder.
+
+        :return: a Keras model
+        """
+        de_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_dense_encoder_in'.format(branch))
+        de_h = MaxPooling3D(pool_size=(8, 4, 4), strides=(8, 4, 4))(de_in)
+        de_h = Dense(2048, activation='relu')(Flatten()(de_h))
+        de_h = Dense(512, activation='relu')(de_h)
+        de_h = Dense(196, activation='relu')(de_h)
+        de_h = Reshape(target_shape=(1, 14, 14))(de_h)
+
+        de_out = BilinearUpsampling(upsampling=8)(de_h)
+
+        return Model(input=de_in, output=de_out, name='{}_dense_encoder'.format(branch))
+
+    ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
+    small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
+    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
+
+    # prediction
+    encoder = DenseEncoder()
+    fine_out = encoder(small_in)
+    fine_out = BilinearUpsampling(upsampling=4)(fine_out)
+
+    crop_out = encoder(crop_in)
+
+    # give some names
+    fine_out = Activation('linear', name='prediction_fine')(fine_out)
+    crop_out = Activation('linear', name='prediction_crop')(crop_out)
+
+    model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
+                  name='{}_flavor_branch'.format(branch))
 
     return model
 

@@ -1,4 +1,4 @@
-from models import DreyeveNet, saliency_loss, SaliencyBranch
+from models import DreyeveNet, saliency_loss, SaliencyBranch, FlavorBranch
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
 from config import batchsize, frames_per_seq, h, w, opt, full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
@@ -45,7 +45,7 @@ def train_image_branch():
                         validation_data=generate_dreyeve_I_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                  image_size=(h, w), mode='val'),
                         nb_val_samples=batchsize * 5,
-                        samples_per_epoch=batchsize * 256,
+                        samples_per_epoch=batchsize * 64,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
@@ -54,7 +54,7 @@ def train_flow_branch():
 
     experiment_id = 'FLOW_{}'.format(uuid.uuid4())
 
-    model = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=False, branch='flow')
+    model = FlavorBranch(input_shape=(3, frames_per_seq, h, w), branch='flow')
     model.compile(optimizer=opt,
                   loss={'prediction_fine': saliency_loss(name=full_frame_loss),
                         'prediction_crop': saliency_loss(name=crop_loss)},
@@ -66,8 +66,8 @@ def train_flow_branch():
                                                             image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_OF_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                   image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize * 128,
-                        samples_per_epoch=batchsize * 512,
+                        nb_val_samples=batchsize * 5,
+                        samples_per_epoch=batchsize * 64,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
@@ -95,4 +95,4 @@ def train_seg_branch():
 
 
 if __name__ == '__main__':
-    train_image_branch()
+    train_flow_branch()
