@@ -32,3 +32,18 @@ def seg_to_colormap(seg):
     color_image = palette[seg.ravel()].reshape(h, w, 3)
 
     return color_image
+
+
+def read_lines_from_file(filename):
+    """
+    Function to read lines from file
+
+    :param filename: The text file to be read.
+    :return: content: A list of strings
+    """
+    with open(filename) as f:
+        content = f.readlines()
+
+    content = [x.strip() for x in content]
+    return content
+
