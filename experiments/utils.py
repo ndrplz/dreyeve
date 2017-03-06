@@ -21,15 +21,19 @@ palette = np.array([[128, 64, 128],
                     [119, 11, 32]], dtype='uint8')
 
 
-def seg_to_colormap(seg):
+def seg_to_colormap(seg, channels_first):
     """
     Function to turn segmentation PREDICTION (not probabilities) to colormap.
 
     :param seg: the prediction image, having shape (h,w)
+    :param channels_first: if true, returns (c,h,w) rather than (h,w,c)
     :return: the colormap image, having shape (h,w,3)
     """
     h, w = seg.shape
     color_image = palette[seg.ravel()].reshape(h, w, 3)
+
+    if channels_first:
+        color_image = color_image.transpose(2, 0, 1)
 
     return color_image
 

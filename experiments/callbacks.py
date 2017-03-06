@@ -92,7 +92,7 @@ class PredictionCallback(keras.callbacks.Callback):
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
             elif self.branch == 'semseg':
                 x_ff_img = X[0][b]  # fullframe, b-th image
-                x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0))
+                x_ff_img = seg_to_colormap(np.argmax(np.squeeze(x_ff_img, axis=1), axis=0), channels_first=True)
 
             x_sm_img = X[1][b][:, -1, :, :]  # resized frame (last one), b-th image
             x_sm_img = x_sm_img.transpose(1, 2, 0)
