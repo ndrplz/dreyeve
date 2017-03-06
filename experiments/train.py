@@ -1,4 +1,4 @@
-from models import DreyeveNet, saliency_loss, SimpleSaliencyModel
+from models import DreyeveNet, saliency_loss, SaliencyBranch
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
 from config import batchsize, frames_per_seq, h, w, opt, full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
@@ -32,7 +32,7 @@ def train_image_branch():
 
     experiment_id = 'COLOR_{}'.format(uuid.uuid4())
 
-    model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
+    model = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
     model.compile(optimizer=opt,
                   loss={'prediction_fine': saliency_loss(name=full_frame_loss),
                         'prediction_crop': saliency_loss(name=crop_loss)},
@@ -54,7 +54,7 @@ def train_flow_branch():
 
     experiment_id = 'FLOW_{}'.format(uuid.uuid4())
 
-    model = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=False, branch='flow')
+    model = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=False, branch='flow')
     model.compile(optimizer=opt,
                   loss={'prediction_fine': saliency_loss(name=full_frame_loss),
                         'prediction_crop': saliency_loss(name=crop_loss)},
@@ -76,7 +76,7 @@ def train_seg_branch():
 
     experiment_id = 'SEGM_{}'.format(uuid.uuid4())
 
-    model = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='semseg')
+    model = SaliencyBranch(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='semseg')
     model.compile(optimizer=opt,
                   loss={'prediction_fine': saliency_loss(name=full_frame_loss),
                         'prediction_crop': saliency_loss(name=crop_loss)},

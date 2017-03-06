@@ -193,10 +193,10 @@ def CoarseSaliencyModel(input_shape, pretrained, branch=''):
     return model
 
 
-def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
+def SaliencyBranch(input_shape, c3d_pretrained, branch=''):
     """
     Function for constructing a saliency model (coarse + fine). This will be a single branch
-    of the finale DreyeveNet.
+    of the final DreyeveNet.
 
     :param input_shape: in the form (channels, frames, h, w). h and w refer to the fullframe size.
     :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
@@ -227,9 +227,9 @@ def SimpleSaliencyModel(input_shape, c3d_pretrained, branch=''):
     fine_h = Convolution2D(1, 3, 3, border_mode='same', init='glorot_uniform', name='{}_refine_conv4'.format(branch))(fine_h)
     fine_out = Activation('relu')(fine_h)
 
-    # repeat fine_out tensor along axis=1, since we have two loss
-    # DVD: this output shape is hardcoded, but should be fine
     if simo_mode:
+        # repeat fine_out tensor along axis=1, since we have two loss
+        # DVD: this output shape is hardcoded, but should be fine
         fine_out = Lambda(lambda x: K.repeat_elements(x, rep=2, axis=1),
                           output_shape=(2, h, w), name='prediction_fine')(fine_out)
     else:
@@ -256,9 +256,9 @@ def DreyeveNet(frames_per_seq, h, w):
     :return: a Keras model
     """
     # get saliency branches
-    im_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
-    of_net = SimpleSaliencyModel(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='optical_flow')
-    seg_net = SimpleSaliencyModel(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='segmentation')
+    im_net = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
+    of_net = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='optical_flow')
+    seg_net = SaliencyBranch(input_shape=(19, frames_per_seq, h, w), c3d_pretrained=False, branch='segmentation')
 
     # define inputs
     X_ff = Input(shape=(3, 1, h, w), name='image_fullframe')
@@ -290,7 +290,7 @@ def DreyeveNet(frames_per_seq, h, w):
 
 
 if __name__ == '__main__':
-    model = SimpleSaliencyModel(input_shape=(3, 16, 448, 448), c3d_pretrained=True, branch='image')
+    model = SaliencyBranch(input_shape=(3, 16, 448, 448), c3d_pretrained=True, branch='image')
     model.summary()
 
 
