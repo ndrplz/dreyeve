@@ -1,7 +1,8 @@
-from models import DreyeveNet, saliency_loss, SaliencyBranch, FlavorBranch
+from models import DreyeveNet, saliency_loss, SaliencyBranch
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
-from config import batchsize, frames_per_seq, h, w, opt, full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
+from config import batchsize, frames_per_seq, h, w, opt, train_samples_per_epoch, val_samples_per_epoch
+from config import full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
 import uuid
 from callbacks import get_callbacks
 
@@ -22,8 +23,8 @@ def fine_tuning():
                                                          image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize * 5,
-                        samples_per_epoch=batchsize * 256,
+                        nb_val_samples=val_samples_per_epoch,
+                        samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
@@ -44,8 +45,8 @@ def train_image_branch():
                                                            image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_I_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                  image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize * 5,
-                        samples_per_epoch=batchsize * 64,
+                        nb_val_samples=val_samples_per_epoch,
+                        samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
@@ -66,8 +67,8 @@ def train_flow_branch():
                                                             image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_OF_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                   image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize * 5,
-                        samples_per_epoch=batchsize * 64,
+                        nb_val_samples=val_samples_per_epoch,
+                        samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
@@ -88,11 +89,11 @@ def train_seg_branch():
                                                              image_size=(h, w), mode='train'),
                         validation_data=generate_dreyeve_SEG_batch(batchsize=batchsize, nb_frames=frames_per_seq,
                                                                    image_size=(h, w), mode='val'),
-                        nb_val_samples=batchsize*5,
-                        samples_per_epoch=batchsize * 256,
+                        nb_val_samples=val_samples_per_epoch,
+                        samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=999,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
 if __name__ == '__main__':
-    train_flow_branch()
+    fine_tuning()
