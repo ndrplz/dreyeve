@@ -48,7 +48,7 @@ class ModelLoader(Callback):
                     m = [l for l in self.model.layers if l.name == 'image_saliency_branch'][0]
                     m.load_weights(self.image_h5)
                 if self.flow_h5 is not None:
-                    m = [l for l in self.model.layers if l.name == 'optical_flow_branch'][0]
+                    m = [l for l in self.model.layers if l.name == 'optical_flow_saliency_branch'][0]
                     m.load_weights(self.flow_h5)
                 if self.seg_h5 is not None:
                     m = [l for l in self.model.layers if l.name == 'segmentation_saliency_branch'][0]
@@ -187,6 +187,8 @@ def get_callbacks(experiment_id):
 
     return [
             ModelLoader(experiment_id=experiment_id,
+                        image_h5='checkpoints/COLOR_f420f1c6-7a02-45d2-b1f3-93a1321396a8/w_epoch_000001.h5',
+                        flow_h5='checkpoints/FLOW_b81aa05d-2aa5-45ca-a78d-207945091562/w_epoch_000028.h5',
                         seg_h5='checkpoints/SEGM_bb8d0541-a31c-484b-97f6-c6f0ea5911f8/w_epoch_000079.h5'),
             PredictionCallback(experiment_id=experiment_id),
             Checkpointer(experiment_id=experiment_id),
