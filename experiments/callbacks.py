@@ -8,25 +8,11 @@ from computer_vision_utils.stitching import stitch_together
 from keras.callbacks import ReduceLROnPlateau, CSVLogger
 from computer_vision_utils.io_helper import write_image, normalize
 from config import frames_per_seq, h, w, log_dir, callback_batchsize
-from utils import seg_to_colormap
+from utils import seg_to_colormap, get_branch_from_experiment_id
 from os.path import join, exists
 
 
-def get_branch_from_experiment_id(experiment_id):
 
-    assert isinstance(experiment_id, basestring), "Experiment ID must be a string."
-
-    branch = None
-    if experiment_id.lower().startswith('dreyeve'):
-        branch = "all"
-    elif experiment_id.lower().startswith('color'):
-        branch = "image"
-    elif experiment_id.lower().startswith('flow'):
-        branch = "optical_flow"
-    elif experiment_id.lower().startswith('segm'):
-        branch = "semseg"
-
-    return branch
 
 
 class ModelLoader(keras.callbacks.Callback):

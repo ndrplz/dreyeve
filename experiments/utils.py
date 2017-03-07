@@ -51,3 +51,24 @@ def read_lines_from_file(filename):
     content = [x.strip() for x in content]
     return content
 
+
+def get_branch_from_experiment_id(experiment_id):
+    """
+    Function to return model branch name given experiment_id.
+    :param experiment_id: experiment id
+    :return: a string among ['all','image','optical_flow','semseg']
+    """
+
+    assert isinstance(experiment_id, basestring), "Experiment ID must be a string."
+
+    branch = None
+    if experiment_id.lower().startswith('dreyeve'):
+        branch = "all"
+    elif experiment_id.lower().startswith('color'):
+        branch = "image"
+    elif experiment_id.lower().startswith('flow'):
+        branch = "optical_flow"
+    elif experiment_id.lower().startswith('segm'):
+        branch = "semseg"
+
+    return branch
