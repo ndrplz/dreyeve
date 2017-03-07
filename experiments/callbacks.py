@@ -29,6 +29,38 @@ def get_branch_from_experiment_id(experiment_id):
     return branch
 
 
+class ModelLoader(keras.callbacks.Callback):
+    def __init__(self, experiment_id, image_h5=None, flow_h5=None, seg_h5=None, all_h5=None):
+
+        self.branch = get_branch_from_experiment_id(experiment_id)
+
+        self.image_h5 = image_h5
+        self.flow_h5 = flow_h5
+        self.seg_h5 = seg_h5
+        self.all_h5 = all_h5
+
+    def on_train_begin(self, logs={}):
+        if self.branch == 'image' and self.image_h5 is not None:
+            self.model.load_weights(self.image_h5)
+        elif self.branch == 'optical_flow' and self.flow_h5 is not None:
+            self.model.load_weights(self.flow_h5)
+        elif self.branch == 'semseg' and self.seg_h5 is not None:
+            self.model.load(self.seg_h5)
+        elif self.branch == 'all':
+            if self.all_h5 is not None:
+                self.model.load(self.all_h5)
+            else:
+                if self.image_h5 is not None:
+                    m = [l for l in self.model.layers if l.name == 'image_saliency_branch'][0]
+                    m.load_weights(self.image_h5)
+                if self.flow_h5 is not None:
+                    m = [l for l in self.model.layers if l.name == 'optical_flow_branch'][0]
+                    m.load_weights(self.flow_h5)
+                if self.seg_h5 is not None:
+                    m = [l for l in self.model.layers if l.name == 'segmentation_saliency_branch'][0]
+                    m.load_weights(self.seg_h5)
+
+
 class Checkpointer(keras.callbacks.Callback):
     def __init__(self, experiment_id):
         # create output directories if not existent
@@ -42,7 +74,6 @@ class Checkpointer(keras.callbacks.Callback):
         self.model.save_weights(join(self.out_dir_path, 'w_epoch_{:06d}.h5'.format(epoch)))
 
 
-# TODO make this work for finetuning
 class PredictionCallback(keras.callbacks.Callback):
 
     def __init__(self, experiment_id):
@@ -81,7 +112,7 @@ class PredictionCallback(keras.callbacks.Callback):
         Z = self.model.predict(X)
 
         for b in range(0, callback_batchsize):
-            # image
+
             if self.branch == 'image':
                 x_ff_img = X[0][b]  # fullframe, b-th image
                 x_ff_img = np.squeeze(x_ff_img, axis=1).transpose(1, 2, 0)
@@ -100,6 +131,24 @@ class PredictionCallback(keras.callbacks.Callback):
 
                 x_cr_img = X[2][b][:, -1, :, :]  # cropped frame (last one), b-th image
                 x_cr_img = seg_to_colormap(np.argmax(x_cr_img, axis=0), channels_first=False)
+            elif self.branch == 'all':
+                # fullframe
+                i_ff_img = X[0][b]
+                i_ff_img = np.squeeze(i_ff_img, axis=1).transpose(1, 2, 0)
+                of_ff_img = X[3][b]
+                of_ff_img = np.squeeze(of_ff_img, axis=1).transpose(1, 2, 0)
+                seg_ff_img = seg_to_colormap(np.argmax(np.squeeze(X[6][b], axis=1), axis=0), channels_first=False)
+
+                x_ff_img = stitch_together([normalize(i_ff_img), normalize(of_ff_img), normalize(seg_ff_img)],
+                                           layout=(3, 1), resize_dim=i_ff_img.shape[:2])  # resize like they're one
+
+                # crop
+                i_cr_img = X[2][b][:, -1, :, :].transpose(1, 2, 0)
+                of_cr_img = X[5][b][:, -1, :, :].transpose(1, 2, 0)
+                seg_cr_img = seg_to_colormap(np.argmax(X[8][b][:, -1, :, :], axis=0), channels_first=False)
+
+                x_cr_img = stitch_together([normalize(i_cr_img), normalize(of_cr_img), normalize(seg_cr_img)],
+                                           layout=(3, 1), resize_dim=i_cr_img.shape[:2])  # resize like they're one
 
             # prediction
             z_ff_img = np.tile(np.expand_dims(normalize(Z[0][b, 0]), axis=2), reps=(1, 1, 3)).astype(np.uint8)
@@ -121,8 +170,12 @@ def get_callbacks(experiment_id):
     if not exists(log_dir):
         os.makedirs(log_dir)
 
-    return [PredictionCallback(experiment_id=experiment_id),
+    return [
+            ModelLoader(experiment_id=experiment_id,
+                        seg_h5='checkpoints/SEGM_bb8d0541-a31c-484b-97f6-c6f0ea5911f8/w_epoch_000079.h5'),
+            PredictionCallback(experiment_id=experiment_id),
             Checkpointer(experiment_id=experiment_id),
             ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=1e-6),
-            CSVLogger(join(log_dir, '{}.txt'.format(experiment_id)))]
+            CSVLogger(join(log_dir, '{}.txt'.format(experiment_id)))
+    ]
 
