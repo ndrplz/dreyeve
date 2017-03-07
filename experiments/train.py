@@ -4,7 +4,8 @@ from config import batchsize, frames_per_seq, h, w, opt, train_samples_per_epoch
 from config import full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
-from models import DreyeveNet, saliency_loss, SaliencyBranch
+from models import DreyeveNet, SaliencyBranch
+from loss_functions import saliency_loss
 from callbacks import get_callbacks
 
 
