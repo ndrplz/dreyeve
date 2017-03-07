@@ -1,19 +1,18 @@
 import numpy as np
+import cv2
+
+from random import choice
+from os.path import join
+from time import time
 
 from config import dreyeve_dir, frame_size_before_crop, simo_mode, total_frames_each_run, force_sample_steering
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
-from random import choice
-from os.path import join
-
 from utils import palette, read_lines_from_file
+
 from computer_vision_utils.io_helper import read_image, normalize
 from computer_vision_utils.stitching import stitch_together
 from computer_vision_utils.tensor_manipulation import resize_tensor, crop_tensor
-
-from time import time
-
-import cv2
 
 
 def sample_signature(sequences, allowed_frames, image_size, allow_mirror):

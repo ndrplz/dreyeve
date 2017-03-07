@@ -1,15 +1,15 @@
-import keras.callbacks
 import numpy as np
 import os
 
-from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
-from computer_vision_utils.stitching import stitch_together
-
 from keras.callbacks import ReduceLROnPlateau, CSVLogger, Callback
-from computer_vision_utils.io_helper import write_image, normalize
-from config import frames_per_seq, h, w, log_dir, callback_batchsize
-from utils import seg_to_colormap, get_branch_from_experiment_id
 from os.path import join, exists
+
+from config import frames_per_seq, h, w, log_dir, callback_batchsize
+from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
+from utils import seg_to_colormap, get_branch_from_experiment_id
+
+from computer_vision_utils.stitching import stitch_together
+from computer_vision_utils.io_helper import write_image, normalize
 
 
 class ModelLoader(Callback):

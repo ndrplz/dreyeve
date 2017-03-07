@@ -1,11 +1,13 @@
 import keras.backend as K
+
 from keras.models import Model
-from keras.layers import Input, Reshape, Activation, merge, LeakyReLU, Lambda, Flatten
-from keras.layers import Dense, Convolution3D, MaxPooling3D, Convolution2D, MaxPooling2D
+from keras.layers import Input, Reshape, merge, Lambda, Activation, LeakyReLU
+from keras.layers import Convolution3D, MaxPooling3D, Convolution2D
 from keras.utils.data_utils import get_file
-from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 
 from config import simo_mode
+
+from keras_dl_modules.custom_keras_extensions.layers import BilinearUpsampling
 
 
 C3D_WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/c3d_weights/w_up2_conv4_new.h5'
