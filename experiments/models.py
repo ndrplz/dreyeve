@@ -329,10 +329,10 @@ def DreyeveNet(frames_per_seq, h, w):
     seg_pred_fine, seg_pred_crop = seg_net([SEG_ff, SEG_small, SEG_crop])
 
     fine_out = merge([x_pred_fine, of_pred_fine, seg_pred_fine], mode='sum', name='merge_fine_prediction')
-    fine_out = Activation('relu', name='fine_prediction')(fine_out)
+    fine_out = Activation('relu', name='prediction_fine')(fine_out)
 
     crop_out = merge([x_pred_crop, of_pred_crop, seg_pred_crop], mode='sum', name='merge_crop_prediction')
-    crop_out = Activation('relu', name='crop_prediction')(crop_out)
+    crop_out = Activation('relu', name='prediction_crop')(crop_out)
 
     model = Model(input=[X_ff, X_small, X_crop, OF_ff, OF_small, OF_crop, SEG_ff, SEG_small, SEG_crop],
                   output=[fine_out, crop_out], name='DreyeveNet')
