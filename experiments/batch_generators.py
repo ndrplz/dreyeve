@@ -20,11 +20,11 @@ def sample_signature(sequences, allowed_frames, image_size, allow_mirror):
     """
     Function to create a unique batch signature for the Dreyeve dataset.
 
-    :param sequences: sequences to sample from
+    :param sequences: sequences to sample from.
     :param allowed_frames: range of allowed frames to sample the sequence start from.
-    :param image_size: in the form (h,w). Needed to crop randomly
-    :param allow_mirror: whether or not to enable random mirroring
-    :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2, do_mirror)
+    :param image_size: in the form (h,w). Needed to crop randomly.
+    :param allow_mirror: whether or not to enable random mirroring.
+    :return: a tuple like (num_run, start, hc1, hc2, wc1, wc2, do_mirror).
     """
     h, w = image_size
     h_c = h // 4
@@ -64,14 +64,14 @@ def sample_signature(sequences, allowed_frames, image_size, allow_mirror):
 
 def load_batch_data(signatures, nb_frames, image_size, batch_type):
     """
-    Function to load a data batch. This is common for `image`, `optical_flow` and `semseg`
+    Function to load a data batch. This is common for `image`, `optical_flow` and `semseg`.
 
     :param signatures: sample signatures, previously evaluated. List of tuples like
                     (num_run, start, hc1, hc2, wc1, wc2). The list is batchsize signatures long.
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param batch_type: choose among [`image`, `optical_flow`, `semseg`]
-    :return: a tuple holding the fullframe, the small and the cropped batch
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :param batch_type: choose among [`image`, `optical_flow`, `semseg`].
+    :return: a tuple holding the fullframe, the small and the cropped batch.
     """
     assert batch_type in ['image', 'optical_flow', 'semseg'], 'Unknown batch type: {}'.format(batch_type)
 
@@ -148,10 +148,10 @@ def load_saliency_data(signatures, nb_frames, image_size, gt_type):
 
     :param signatures: sample signatures, previously evaluated. List of tuples like
                     (num_run, start, hc1, hc2, wc1, wc2). The list is batchsize signatures long.
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple holding the fullframe and the cropped saliency
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple holding the fullframe and the cropped saliency.
     """
 
     batchsize = len(signatures)
@@ -191,9 +191,9 @@ def load_saliency_data_simo(signatures, nb_frames, image_size):
 
     :param signatures: sample signatures, previously evaluated. List of tuples like
                     (num_run, start, hc1, hc2, wc1, wc2). The list is batchsize signatures long.
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :return: a tuple holding the fullframe and the cropped saliency
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :return: a tuple holding the fullframe and the cropped saliency.
     """
 
     batchsize = len(signatures)
@@ -232,14 +232,14 @@ def load_saliency_data_simo(signatures, nb_frames, image_size):
 
 def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to load a Dreyeve batch of only images
+    Function to load a Dreyeve batch of only images.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `val`, `test`]
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: an image batch and the relative saliency in the form (X,Y)
+    :param batchsize: batchsize.
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :param mode: choose among [`train`, `val`, `test`].
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: an image batch and the relative saliency in the form (X,Y).
     """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
@@ -273,14 +273,14 @@ def dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
 def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to load a Dreyeve batch of only optical flow data
+    Function to load a Dreyeve batch of only optical flow data.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `val`, `test`]
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: an optical flow batch and the relative saliency in the form (X,Y)
+    :param batchsize: batchsize.
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :param mode: choose among [`train`, `val`, `test`].
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: an optical flow batch and the relative saliency in the form (X,Y).
     """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
@@ -314,14 +314,14 @@ def dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
 def dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to load a Dreyeve batch of only segmentation data
+    Function to load a Dreyeve batch of only segmentation data.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of temporal frames in each sample
-    :param image_size: tuple in the form (h,w). This refers to the fullframe image
-    :param mode: choose among [`train`, `val`, `test`]
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a segmentation batch and the relative saliency in the form (X,Y)
+    :param batchsize: batchsize.
+    :param nb_frames: number of temporal frames in each sample.
+    :param image_size: tuple in the form (h,w). This refers to the fullframe image.
+    :param mode: choose among [`train`, `val`, `test`].
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a segmentation batch and the relative saliency in the form (X,Y).
     """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
@@ -357,12 +357,12 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to load a batch of the dreyeve dataset, with image, optical flow and segmentation.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of frames for each batch
-    :param image_size: dimension of tensors, must satisfy (h,w) % 4 = (0,0)
-    :param mode: choose among [`train`, `val`, `test`]
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple like: [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c]
+    :param batchsize: batchsize.
+    :param nb_frames: number of frames for each batch.
+    :param image_size: dimension of tensors, must satisfy (h,w) % 4 = (0,0).
+    :param mode: choose among [`train`, `val`, `test`].
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple like: [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c].
     """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
     assert gt_type in ['sal', 'fix'], 'Unknown gt_type {} for dreyeve batch loader'.format(gt_type)
@@ -398,14 +398,14 @@ def dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
 
 def generate_dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to generate a batch from the dreyeve dataset. The batch will only contain images
+    Function to generate a batch from the dreyeve dataset. The batch will only contain images.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of frames for each batch
-    :param image_size: dimension of tensors
-    :param mode: `train` or `test`
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple like: ([X, X_s, X_c], [Y, Y_c])
+    :param batchsize: batchsize.
+    :param nb_frames: number of frames for each batch.
+    :param image_size: dimension of tensors.
+    :param mode: `train` or `test`.
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple like: ([X, X_s, X_c], [Y, Y_c]).
     """
     while True:
         yield dreyeve_I_batch(batchsize=batchsize, nb_frames=nb_frames,
@@ -414,55 +414,58 @@ def generate_dreyeve_I_batch(batchsize, nb_frames, image_size, mode, gt_type='fi
 
 def generate_dreyeve_OF_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to generate a batch from the dreyeve dataset. The batch will only contain optical flow
+    Function to generate a batch from the dreyeve dataset. The batch will only contain optical flow.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of frames for each batch
-    :param image_size: dimension of tensors
-    :param mode: `train` or `test`
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple like: ([OF, OF_s, OF_c], [Y, Y_c])
+    :param batchsize: batchsize.
+    :param nb_frames: number of frames for each batch.
+    :param image_size: dimension of tensors.
+    :param mode: `train` or `test`.
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple like: ([OF, OF_s, OF_c], [Y, Y_c]).
     """
     while True:
-        yield dreyeve_OF_batch(batchsize=batchsize, nb_frames=nb_frames, image_size=image_size, mode=mode, gt_type=gt_type)
+        yield dreyeve_OF_batch(batchsize=batchsize, nb_frames=nb_frames,
+                               image_size=image_size, mode=mode, gt_type=gt_type)
 
 
 def generate_dreyeve_SEG_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
-    Function to generate a batch from the dreyeve dataset. The batch will only contain segmentation data
+    Function to generate a batch from the dreyeve dataset. The batch will only contain segmentation data.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of frames for each batch
-    :param image_size: dimension of tensors
-    :param mode: `train` or `test`
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple like: ([SEG, SEG_s, SEG_c], [Y, Y_c])
+    :param batchsize: batchsize.
+    :param nb_frames: number of frames for each batch.
+    :param image_size: dimension of tensors.
+    :param mode: `train` or `test`.
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple like: ([SEG, SEG_s, SEG_c], [Y, Y_c]).
     """
     while True:
-        yield dreyeve_SEG_batch(batchsize=batchsize, nb_frames=nb_frames, image_size=image_size, mode=mode, gt_type=gt_type)
+        yield dreyeve_SEG_batch(batchsize=batchsize, nb_frames=nb_frames,
+                                image_size=image_size, mode=mode, gt_type=gt_type)
 
 
 def generate_dreyeve_batch(batchsize, nb_frames, image_size, mode, gt_type='fix'):
     """
     Function to generate a batch from the dreyeve dataset.
 
-    :param batchsize: batchsize
-    :param nb_frames: number of frames for each batch
-    :param image_size: dimension of tensors
-    :param mode: `train` or `test`
-    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth)
-    :return: a tuple like: ([X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c])
+    :param batchsize: batchsize.
+    :param nb_frames: number of frames for each batch.
+    :param image_size: dimension of tensors.
+    :param mode: `train` or `test`.
+    :param gt_type: choose among `sal` (old groundtruth) and `fix` (new groundtruth).
+    :return: a tuple like: ([X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c], [Y, Y_c]).
     """
     while True:
-        yield dreyeve_batch(batchsize=batchsize, nb_frames=nb_frames, image_size=image_size, mode=mode, gt_type=gt_type)
+        yield dreyeve_batch(batchsize=batchsize, nb_frames=nb_frames,
+                            image_size=image_size, mode=mode, gt_type=gt_type)
 
 
 def visualize_batch(X, Y):
     """
-    Helper function to visualize a batch
+    Helper function to visualize a batch.
 
-    :param X: input data: [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c]
-    :param Y: saliency data like [Y, Y_c]
+    :param X: input data: [X, X_s, X_c, OF, OF_s, OF_c, SEG, SEG_s, SEG_c].
+    :param Y: saliency data like [Y, Y_c].
     """
     batchsize, _, frames_per_batch, h, w = X[0].shape
     batchsize, _, frames_per_batch, h_s, w_s = X[1].shape
@@ -528,17 +531,19 @@ def visualize_batch(X, Y):
             y_s = (np.tile(y_s, (3, 1, 1))).transpose(1, 2, 0)
 
             # stitch and visualize
-            stitch_s = stitch_together([normalize(x_s), of_s, seg_s, normalize(y_s)], layout=(2, 2), resize_dim=(540, 960))
+            stitch_s = stitch_together([normalize(x_s), of_s, seg_s, normalize(y_s)],
+                                       layout=(2, 2), resize_dim=(540, 960))
 
             # stitch the stitchs D=
-            final_stitch = stitch_together([stitch_ff, stitch_s, stitch_c], layout=(1, 3), resize_dim=(810, 1440))
+            final_stitch = stitch_together([stitch_ff, stitch_s, stitch_c],
+                                           layout=(1, 3), resize_dim=(810, 1440))
             cv2.imshow('Batch_viewer', final_stitch.astype(np.uint8))
             cv2.waitKey()
 
 
 def test_load_batch():
     """
-    Helper function, to load and visualize a dreyeve batch
+    Helper function, to load and visualize a dreyeve batch.
     """
     t = time()
     X, Y = dreyeve_batch(batchsize=8, nb_frames=16, image_size=(448, 800), mode='train', gt_type='fix')
@@ -560,5 +565,6 @@ def test_load_batch():
     visualize_batch(X, Y)
 
 
+# tester function
 if __name__ == '__main__':
     test_load_batch()

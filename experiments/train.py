@@ -8,6 +8,10 @@ from callbacks import get_callbacks
 
 
 def fine_tuning():
+    """
+    Function to launch training on DreyeveNet. It is called `fine_tuning` since supposes
+    the three branches to be pretrained. Should also work from scratch.
+    """
 
     experiment_id = 'DREYEVE_{}'.format(uuid.uuid4())
 
@@ -30,6 +34,9 @@ def fine_tuning():
 
 
 def train_image_branch():
+    """
+    Function to train a SaliencyBranch model on images.
+    """
 
     experiment_id = 'COLOR_{}'.format(uuid.uuid4())
 
@@ -52,7 +59,9 @@ def train_image_branch():
 
 
 def train_flow_branch():
-
+    """
+    Function to train a SaliencyBranch model on optical flow.
+    """
     experiment_id = 'FLOW_{}'.format(uuid.uuid4())
 
     model = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='flow')
@@ -74,6 +83,9 @@ def train_flow_branch():
 
 
 def train_seg_branch():
+    """
+    Function to train a SaliencyBranch model on semantic segmentation.
+    """
 
     experiment_id = 'SEGM_{}'.format(uuid.uuid4())
 
@@ -95,5 +107,6 @@ def train_seg_branch():
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
+# training entry point
 if __name__ == '__main__':
     fine_tuning()

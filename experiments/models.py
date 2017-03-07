@@ -15,31 +15,52 @@ def saliency_loss(name, mse_beta=None):
     """
     Returns loss for the saliency task.
 
-    :param name: string identifier of loss function
-    :param mse_beta: regularizer for weighted mse
-    :return: the loss symbolic function
+    :param name: string identifier of loss function.
+    :param mse_beta: regularizer for weighted mse.
+    :return: the loss symbolic function.
     """
     assert name in ['mse', 'sse', 'nss', 'simo', 'kld'], 'Unknown loss function: {}'.format(name)
 
     # K.mean: axis can be None - in which case the mean is computed along all axes(like numpy)
     # see http://deeplearning.net/software/theano/library/tensor/basic.html
     def mean_squared_error(y_true, y_pred):
+        """
+        Mean squared error loss.
+
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :return: loss symbolic value.
+        """
         return K.mean(K.square(y_pred - y_true))
 
     def weighted_mean_squared_error(y_true, y_pred):
+        """
+        Regularized mean squared error loss. Inspired by the one in mlnet[2].
+        Mse_beta is the regularizer.
+
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :return: loss symbolic value.
+        """
         return K.mean(K.square(y_pred - y_true) / (255 - y_true + mse_beta))  # TODO does 255-y_true make sense?
 
-    def sum_squared_error(y_true, y_pred):
+    def sum_squared_errors(y_true, y_pred):
+        """
+        Sum of squared errors loss.
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :return: loss symbolic value.
+        """
         return K.sum(K.square(y_pred - y_true))
 
     def kullback_leibler_divergence(y_true, y_pred, eps=K.epsilon()):
         """
         Kullback-Leiber divergence (sec 4.2.3 of [1]). Assumes shape (b, 1, h, w) for all tensors.
 
-        :param y_true: groundtruth
-        :param y_pred: prediction
-        :param eps: regularization epsilon
-        :return: loss value (one symbolic value per batch element)
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :param eps: regularization epsilon.
+        :return: loss value (one symbolic value per batch element).
         """
         P = y_pred
         P = P / (K.epsilon() + K.sum(P, axis=[1, 2, 3], keepdims=True))
@@ -54,11 +75,11 @@ def saliency_loss(name, mse_beta=None):
         """
         Information gain (sec 4.1.3 of [1]). Assumes shape (b, 1, h, w) for all tensors.
 
-        :param y_true: groundtruth
-        :param y_pred: prediction
-        :param y_base: baseline
-        :param eps: regularization epsilon
-        :return: loss value (one symbolic value per batch element)
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :param y_base: baseline.
+        :param eps: regularization epsilon.
+        :return: loss value (one symbolic value per batch element).
         """
         P = y_pred
         P = P / (K.epsilon() + K.max(P, axis=[1, 2, 3], keepdims=True))
@@ -76,9 +97,9 @@ def saliency_loss(name, mse_beta=None):
         """
         Normalized Scanpath Saliency (sec 4.1.2 of [1]). Assumes shape (b, 1, h, w) for all tensors.
 
-        :param y_true: groundtruth
-        :param y_pred: prediction
-        :return: loss value (one symbolic value per batch element)
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :return: loss value (one symbolic value per batch element).
         """
         P = y_pred
         P = P / (K.epsilon() + K.max(P, axis=[1, 2, 3], keepdims=True))
@@ -102,9 +123,9 @@ def saliency_loss(name, mse_beta=None):
         y[:, 0, :, :] is saliency, we want KLD for saliency.
         y[:, 1, :, :] is fixation, we want IG for fixation using saliency groundtruth as baseline.
 
-        :param y_true: groundtruth
-        :param y_pred: prediction
-        :return: loss value (one symbolic value per batch element)
+        :param y_true: groundtruth.
+        :param y_pred: prediction.
+        :return: loss value (one symbolic value per batch element).
         """
 
         y_true_sal = y_true[:, 0:1, :, :]
@@ -116,34 +137,12 @@ def saliency_loss(name, mse_beta=None):
         return kullback_leibler_divergence(y_true_sal, y_pred_sal) - \
                information_gain(y_true_fix, y_pred_fix, y_true_sal)  # maximize information gain over baseline
 
-    def nss_marcy(y_true, y_pred):
-        max_y_pred = K.repeat_elements(
-            K.expand_dims(K.repeat_elements(K.expand_dims(K.max(K.max(y_pred, axis=2), axis=2)), 448, axis=-1)),
-            448, axis=-1)
-        y_pred /= max_y_pred
-
-        y_pred_flatten = K.batch_flatten(y_pred)
-
-        y_mean = K.mean(y_pred_flatten, axis=-1)
-        y_mean = K.repeat_elements(
-            K.expand_dims(K.repeat_elements(K.expand_dims(K.expand_dims(y_mean)), 448, axis=-1)), 448,
-            axis=-1)
-
-        y_std = K.std(y_pred_flatten, axis=-1)
-        y_std = K.repeat_elements(
-            K.expand_dims(K.repeat_elements(K.expand_dims(K.expand_dims(y_std)), 448, axis=-1)), 448,
-            axis=-1)
-
-        y_pred = (y_pred - y_mean) / (y_std + K.epsilon())
-
-        return -(K.sum(K.sum(y_true * y_pred, axis=2), axis=2) / K.sum(K.sum(y_true, axis=2), axis=2))
-
     if name == 'mse' and mse_beta is not None:
         return weighted_mean_squared_error
     elif name == 'mse' and mse_beta is None:
         return mean_squared_error
     elif name == 'sse':
-        return sum_squared_error
+        return sum_squared_errors
     elif name == 'nss':
         return normalized_scanpath_saliency
     elif name == 'simo':
@@ -154,12 +153,13 @@ def saliency_loss(name, mse_beta=None):
 
 def CoarseSaliencyModel(input_shape, pretrained, branch=''):
     """
-    Function for constructing a CoarseSaliencyModel network, based on C3D. Used for coarse prediction in dreyeve.
+    Function for constructing a CoarseSaliencyModel network, based on C3D.
+    Used for coarse prediction in SaliencyBranch.
 
-    :param input_shape: in the form (channels, frames, h, w)
+    :param input_shape: in the form (channels, frames, h, w).
     :param pretrained: Whether to initialize with weights pretrained on action recognition.
-    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
-    :return: a Keras model
+    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow').
+    :return: a Keras model.
     """
     c, fr, h, w = input_shape
     assert h % 8 == 0 and w % 8 == 0, 'I think input shape should be divisible by 8. Should it?'
@@ -201,8 +201,8 @@ def SaliencyBranch(input_shape, c3d_pretrained, branch=''):
     of the final DreyeveNet.
 
     :param input_shape: in the form (channels, frames, h, w). h and w refer to the fullframe size.
-    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
-    :return: a Keras model
+    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow').
+    :return: a Keras model.
     """
     c, fr, h, w = input_shape
     # assert h % 32 == 0 and w % 32 == 0, 'I think input shape should be divisible by 32. Should it?'
@@ -248,63 +248,14 @@ def SaliencyBranch(input_shape, c3d_pretrained, branch=''):
     return model
 
 
-def FlavorBranch(input_shape, branch=''):
-    """
-    Function for constructing a support branch (tried for optical flow). This will be a single branch
-    of the final DreyeveNet.
-
-    :param input_shape: in the form (channels, frames, h, w). h and w refer to the fullframe size.
-    :param branch: Name of the saliency branch (e.g. 'image' or 'optical_flow')
-    :return: a Keras model
-    """
-    c, fr, h, w = input_shape
-
-    def DenseEncoder():
-        """
-        Function that builds a simple dense encoder.
-
-        :return: a Keras model
-        """
-        de_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_dense_encoder_in'.format(branch))
-        de_h = MaxPooling3D(pool_size=(8, 4, 4), strides=(8, 4, 4))(de_in)
-        de_h = Dense(2048, activation='relu')(Flatten()(de_h))
-        de_h = Dense(512, activation='relu')(de_h)
-        de_h = Dense(196, activation='relu')(de_h)
-        de_h = Reshape(target_shape=(1, 14, 14))(de_h)
-
-        de_out = BilinearUpsampling(upsampling=8)(de_h)
-
-        return Model(input=de_in, output=de_out, name='{}_dense_encoder'.format(branch))
-
-    ff_in = Input(shape=(c, 1, h, w), name='{}_input_ff'.format(branch))
-    small_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_small'.format(branch))
-    crop_in = Input(shape=(c, fr, h // 4, w // 4), name='{}_input_crop'.format(branch))
-
-    # prediction
-    encoder = DenseEncoder()
-    fine_out = encoder(small_in)
-    fine_out = BilinearUpsampling(upsampling=4)(fine_out)
-
-    crop_out = encoder(crop_in)
-
-    # give some names
-    fine_out = Activation('linear', name='prediction_fine')(fine_out)
-    crop_out = Activation('linear', name='prediction_crop')(crop_out)
-
-    model = Model(input=[ff_in, small_in, crop_in], output=[fine_out, crop_out],
-                  name='{}_flavor_branch'.format(branch))
-
-    return model
-
-
 def DreyeveNet(frames_per_seq, h, w):
     """
-    Function for constructing the whole DreyeveNet
+    Function for constructing the whole DreyeveNet.
 
-    :param frames_per_seq: how many frames in each sequence
-    :param h: h (fullframe)
-    :param w: w (fullframe)
-    :return: a Keras model
+    :param frames_per_seq: how many frames in each sequence.
+    :param h: h (fullframe).
+    :param w: w (fullframe).
+    :return: a Keras model.
     """
     # get saliency branches
     im_net = SaliencyBranch(input_shape=(3, frames_per_seq, h, w), c3d_pretrained=True, branch='image')
@@ -340,6 +291,7 @@ def DreyeveNet(frames_per_seq, h, w):
     return model
 
 
+# tester function
 if __name__ == '__main__':
     model = SaliencyBranch(input_shape=(3, 16, 448, 448), c3d_pretrained=True, branch='image')
     model.summary()
@@ -353,4 +305,6 @@ REFERENCES:
   journal   = {arXiv preprint arXiv:1604.03605},
   year      = {2016}
 }
+
+[2] https://github.com/marcellacornia/mlnet/blob/master/model.py
 """

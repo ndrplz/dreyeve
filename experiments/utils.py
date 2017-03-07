@@ -1,5 +1,6 @@
 import numpy as np
 
+# cityscapes dataset palette
 palette = np.array([[128, 64, 128],
                     [244, 35, 232],
                     [70, 70, 70],

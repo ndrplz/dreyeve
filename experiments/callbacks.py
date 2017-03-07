@@ -5,18 +5,26 @@ import os
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from computer_vision_utils.stitching import stitch_together
 
-from keras.callbacks import ReduceLROnPlateau, CSVLogger
+from keras.callbacks import ReduceLROnPlateau, CSVLogger, Callback
 from computer_vision_utils.io_helper import write_image, normalize
 from config import frames_per_seq, h, w, log_dir, callback_batchsize
 from utils import seg_to_colormap, get_branch_from_experiment_id
 from os.path import join, exists
 
 
+class ModelLoader(Callback):
+    """
+    Callback to load weights into the network at the beginning of training.
 
-
-
-class ModelLoader(keras.callbacks.Callback):
+    :param experiment_id: the experiment id.
+    :param image_h5: path of the .h5 file to load for the image branch.
+    :param flow_h5: path of the .h5 file to load for the optical flow branch.
+    :param seg_h5: path of the .h5 file to load for the segmentation branch.
+    :param all_h5: path of the .h5 file to load for the whole DreyeveNet.
+    """
     def __init__(self, experiment_id, image_h5=None, flow_h5=None, seg_h5=None, all_h5=None):
+
+        super(ModelLoader, self).__init__()
 
         self.branch = get_branch_from_experiment_id(experiment_id)
 
@@ -47,8 +55,16 @@ class ModelLoader(keras.callbacks.Callback):
                     m.load_weights(self.seg_h5)
 
 
-class Checkpointer(keras.callbacks.Callback):
+class Checkpointer(Callback):
+    """
+    Callback to save weights of a model, on epoch end.
+
+    :param experiment_id: the experiment id.
+    """
     def __init__(self, experiment_id):
+
+        super(Checkpointer, self).__init__()
+
         # create output directories if not existent
         out_dir_path = join('checkpoints', experiment_id)
         if not os.path.exists(out_dir_path):
@@ -60,9 +76,17 @@ class Checkpointer(keras.callbacks.Callback):
         self.model.save_weights(join(self.out_dir_path, 'w_epoch_{:06d}.h5'.format(epoch)))
 
 
-class PredictionCallback(keras.callbacks.Callback):
+class PredictionCallback(Callback):
+    """
+    Callback to perform some debug predictions, on epoch end.
+    Loads a batch, predicts it and saves images in `predictions/${experiment_id}`.
+
+    :param experiment_id: the experiment id.
+    """
 
     def __init__(self, experiment_id):
+
+        super(PredictionCallback, self).__init__()
 
         self.branch = get_branch_from_experiment_id(experiment_id)
 
@@ -152,7 +176,12 @@ class PredictionCallback(keras.callbacks.Callback):
 
 
 def get_callbacks(experiment_id):
+    """
+    Helper function to build the list of desired keras callbacks.
 
+    :param experiment_id: experiment id.
+    :return: a list of Keras Callbacks.
+    """
     if not exists(log_dir):
         os.makedirs(log_dir)
 
