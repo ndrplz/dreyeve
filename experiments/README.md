@@ -11,8 +11,3 @@ Python project containing the main dreyeve experiments
 
 
 ---
-
-#### TODOS:
-* maybe remove mean in batch generation?
-* refine models
-* refine callbacks
