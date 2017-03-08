@@ -109,3 +109,5 @@ experiments/predictions
 experiments/checkpoints
 experiments/move_dreyeve_dirs.py
 experiments/logs
+experiments/predict_on_cineca/out_pred/**
+*.h5
