@@ -109,9 +109,6 @@ if __name__ == '__main__':
     flow_branch = [l for l in dreyevenet_model.layers if l.name == 'optical_flow_saliency_branch'][0]
     semseg_branch = [l for l in dreyevenet_model.layers if l.name == 'segmentation_saliency_branch'][0]
 
-    # this is tmp
-    image_branch.load_weights('image_branch.h5')
-
     # set up some directories
     dreyevenet_pred_dir = join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'dreyeveNet')
     image_pred_dir = join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'image_branch')
