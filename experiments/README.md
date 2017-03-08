@@ -1,5 +1,5 @@
 # experiments
-Python project containing the main dreyeve experiments
+Python project containing the code to train DreyeveNet.
 
 * `config.py` holds some configuration variables;
 * `utils.py` holds some helpers;
