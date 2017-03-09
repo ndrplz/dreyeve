@@ -4,7 +4,7 @@ import cv2
 import argparse
 
 import os
-import tqdm
+from tqdm import tqdm
 from os.path import join
 
 from models import DreyeveNet
