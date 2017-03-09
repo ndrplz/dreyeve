@@ -111,3 +111,4 @@ experiments/move_dreyeve_dirs.py
 experiments/logs
 experiments/predict_on_cineca/out_pred/**
 *.h5
+experiments/train_cineca_pids.txt
