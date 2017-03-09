@@ -10,7 +10,7 @@ total_frames_each_run = 7500
 log_dir = 'logs'
 
 # --- TRAIN --- #
-batchsize = 1
+batchsize = 16
 frames_per_seq = 16
 h = 448
 w = 448
@@ -19,8 +19,9 @@ val_frame_range = range(3500, 4000 - frames_per_seq - 1)
 test_frame_range = range(0, total_frames_each_run-frames_per_seq - 1)
 frame_size_before_crop = (256, 256)
 
-train_samples_per_epoch = 256 * batchsize
+train_samples_per_epoch = 512 * batchsize
 val_samples_per_epoch = 64 * batchsize
+nb_epochs = 20
 
 force_sample_steering = False
 
@@ -34,4 +35,4 @@ opt = Adam(lr=0.0001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 simo_mode = False  # DVD: works only with full_frame_loss = 'simo'
 
 # callbacks
-callback_batchsize = 1
+callback_batchsize = 8

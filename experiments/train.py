@@ -1,6 +1,6 @@
 import uuid
 
-from config import batchsize, frames_per_seq, h, w, opt, train_samples_per_epoch, val_samples_per_epoch
+from config import batchsize, frames_per_seq, h, w, opt, train_samples_per_epoch, val_samples_per_epoch, nb_epochs
 from config import full_frame_loss, crop_loss, w_loss_fine, w_loss_cropped
 from batch_generators import generate_dreyeve_I_batch, generate_dreyeve_OF_batch, generate_dreyeve_SEG_batch
 from batch_generators import generate_dreyeve_batch
@@ -31,7 +31,7 @@ def fine_tuning():
                                                                image_size=(h, w), mode='val'),
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
-                        nb_epoch=999,
+                        nb_epoch=nb_epochs,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -56,7 +56,7 @@ def train_image_branch():
                                                                  image_size=(h, w), mode='val'),
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
-                        nb_epoch=999,
+                        nb_epoch=nb_epochs,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -80,7 +80,7 @@ def train_flow_branch():
                                                                   image_size=(h, w), mode='val'),
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
-                        nb_epoch=999,
+                        nb_epoch=nb_epochs,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -105,7 +105,7 @@ def train_seg_branch():
                                                                    image_size=(h, w), mode='val'),
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
-                        nb_epoch=999,
+                        nb_epoch=nb_epochs,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
