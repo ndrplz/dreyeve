@@ -39,7 +39,7 @@ class ModelLoader(Callback):
         elif self.branch == 'optical_flow' and self.flow_h5 is not None:
             self.model.load_weights(self.flow_h5)
         elif self.branch == 'semseg' and self.seg_h5 is not None:
-            self.model.load(self.seg_h5)
+            self.model.load_weights(self.seg_h5)
         elif self.branch == 'all':
             if self.all_h5 is not None:
                 self.model.load(self.all_h5)
@@ -186,10 +186,7 @@ def get_callbacks(experiment_id):
         os.makedirs(log_dir)
 
     return [
-            ModelLoader(experiment_id=experiment_id,
-                        image_h5='checkpoints/COLOR_f420f1c6-7a02-45d2-b1f3-93a1321396a8/w_epoch_000001.h5',
-                        flow_h5='checkpoints/FLOW_b81aa05d-2aa5-45ca-a78d-207945091562/w_epoch_000028.h5',
-                        seg_h5='checkpoints/SEGM_bb8d0541-a31c-484b-97f6-c6f0ea5911f8/w_epoch_000079.h5'),
+            ModelLoader(experiment_id=experiment_id),
             PredictionCallback(experiment_id=experiment_id),
             Checkpointer(experiment_id=experiment_id),
             ReduceLROnPlateau(monitor='loss', factor=0.5, patience=5, min_lr=1e-6),
