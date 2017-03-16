@@ -1,4 +1,8 @@
 Code to run predictions of all sequences on cineca.
+* `compute_metrics.py` script for computing metrics over predictions of a sequence
+and save them to txt files.
+
+Usage: `python compute_metrics.py --start <start_sequence> --stop <stop_sequence>
 
 * `move_dreyeve_of_to_cineca.py` script to move all optical flow data
 to cineca, in order to use it to make predictions.
