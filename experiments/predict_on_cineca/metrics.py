@@ -33,7 +33,7 @@ def cc_numeric(y_true, y_pred):
     Q = y_true / (eps + np.sum(y_true))  # prob
 
     n = P.size
-    cc = np.dot(P.flatten() - np.mean(P), Q.flatten() - np.mean(Q)) / (np.std(P) * np.std(Q)) / n
+    cc = np.dot(P.flatten() - np.mean(P), Q.flatten() - np.mean(Q)) / (eps + np.std(P) * np.std(Q)) / n
 
     return cc
 
