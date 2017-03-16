@@ -140,6 +140,108 @@ class AblationStudy:
         if not os.path.exists(self.ablation_dir):
             os.makedirs(self.ablation_dir)
 
+        # open files and put headers in it
+        self.kld_file = open(join(self.ablation_dir, 'kld.txt'), mode='w')
+        self.kld_file.write('FRAME_NUMBER,'
+                            'KLD_DREYEVE_WRT_SAL'
+                            'KLD_IMAGEFLOW_WRT_SAL,'
+                            'KLD_IMAGESEG_WRT_SAL,'
+                            'KLD_FLOWSEG_WRT_SAL'
+                            'KLD_DREYEVE_WRT_FIX'
+                            'KLD_IMAGEFLOW_WRT_FIX,'
+                            'KLD_IMAGESEG_WRT_FIX,'
+                            'KLD_FLOWSEG_WRT_FIX'
+                            '\n')
+
+        self.cc_file = open(join(self.ablation_dir, 'cc.txt'), mode='w')
+        self.cc_file.write('FRAME_NUMBER,'
+                           'CC_DREYEVE_WRT_SAL'
+                           'CC_IMAGEFLOW_WRT_SAL,'
+                           'CC_IMAGESEG_WRT_SAL,'
+                           'CC_FLOWSEG_WRT_SAL'
+                           'CC_DREYEVE_WRT_FIX'
+                           'CC_IMAGEFLOW_WRT_FIX,'
+                           'CC_IMAGESEG_WRT_FIX,'
+                           'CC_FLOWSEG_WRT_FIX'
+                           '\n')
+
+        # initialize lists to handle values for all frames
+        # this is used at the end to compute averages
+        self.kld_values = []
+        self.cc_values = []
+
+    def feed(self, frame_number, p_dreyeve, p_image, p_flow, p_seg, gt_sal, gt_fix):
+        """
+        Feeds the ablation with new predictions and groundtruth data to evaluate.
+
+        :param frame_number: the index of the frame in evaluation
+        :param p_dreyeve: the prediction of the dreyevenet
+        :param p_image: the prediction of the image branch
+        :param p_flow: the prediction of the optical flow branch
+        :param p_seg: the prediction of the segmentation branch
+        :param gt_sal: the groundtruth data in terms of saliency map
+        :param gt_fix: the groundtruth data in terms of fixation map
+        """
+
+        this_frame_kld = [frame_number,
+                          kld_numeric(gt_sal, p_dreyeve),
+                          kld_numeric(gt_sal, p_image + p_flow),
+                          kld_numeric(gt_sal, p_image + p_seg),
+                          kld_numeric(gt_sal, p_flow + p_seg),
+                          kld_numeric(gt_fix, p_dreyeve),
+                          kld_numeric(gt_fix, p_image + p_flow),
+                          kld_numeric(gt_fix, p_image + p_seg),
+                          kld_numeric(gt_fix, p_flow + p_seg),
+                          ]
+
+        this_frame_cc = [frame_number,
+                         cc_numeric(gt_sal, p_dreyeve),
+                         cc_numeric(gt_sal, p_image + p_flow),
+                         cc_numeric(gt_sal, p_image + p_seg),
+                         cc_numeric(gt_sal, p_flow + p_seg),
+                         cc_numeric(gt_fix, p_dreyeve),
+                         cc_numeric(gt_fix, p_image + p_flow),
+                         cc_numeric(gt_fix, p_image + p_seg),
+                         cc_numeric(gt_fix, p_flow + p_seg),
+                         ]
+
+        self.kld_file.write('{},{},{},{},{},{},{},{},{}\n'.format(*this_frame_kld))
+        self.cc_file.write('{},{},{},{},{},{},{},{},{}\n'.format(*this_frame_cc))
+
+        self.kld_values.append(this_frame_kld[1:])  # discard frame number
+        self.cc_values.append(this_frame_cc[1:])  # discard frame number
+
+    def save_mean_metrics(self):
+        """
+        Function to save the mean of the metrics in a separate file.
+        """
+
+        with open(join(self.ablation_dir, 'kld_mean.txt'), mode='w') as f:
+            f.write('KLD_DREYEVE_WRT_SAL'
+                    'KLD_IMAGEFLOW_WRT_SAL,'
+                    'KLD_IMAGESEG_WRT_SAL,'
+                    'KLD_FLOWSEG_WRT_SAL'
+                    'KLD_DREYEVE_WRT_FIX'
+                    'KLD_IMAGEFLOW_WRT_FIX,'
+                    'KLD_IMAGESEG_WRT_FIX,'
+                    'KLD_FLOWSEG_WRT_FIX'
+                    '\n')
+            avg = np.mean(np.array(self.kld_values), axis=0).tolist()
+            f.write('{},{},{},{},{},{},{},{}'.format(*avg))
+
+        with open(join(self.ablation_dir, 'cc_mean.txt'), mode='w') as f:
+            f.write('CC_DREYEVE_WRT_SAL'
+                    'CC_IMAGEFLOW_WRT_SAL,'
+                    'CC_IMAGESEG_WRT_SAL,'
+                    'CC_FLOWSEG_WRT_SAL'
+                    'CC_DREYEVE_WRT_FIX'
+                    'CC_IMAGEFLOW_WRT_FIX,'
+                    'CC_IMAGESEG_WRT_FIX,'
+                    'CC_FLOWSEG_WRT_FIX'
+                    '\n')
+            avg = np.mean(np.array(self.cc_values), axis=0).tolist()
+            f.write('{},{},{},{},{},{},{},{}'.format(*avg))
+
 
 if __name__ == '__main__':
 
@@ -174,6 +276,7 @@ if __name__ == '__main__':
 
         print 'Computing metrics...'
         metric_saver = MetricSaver(pred_dir, seq)
+        ablation = AblationStudy(pred_dir, seq)
 
         for fr in tqdm(xrange(15, 7500-1)):
             # load predictions
@@ -191,6 +294,8 @@ if __name__ == '__main__':
 
             # feed the saver
             metric_saver.feed(fr, p_dreyeve, p_image, p_flow, p_seg, gt_sal, gt_fix)
+            ablation.feed(fr, p_dreyeve, p_image, p_flow, p_seg, gt_sal, gt_fix)
 
         # save mean values
         metric_saver.save_mean_metrics()
+        ablation.save_mean_metrics()
