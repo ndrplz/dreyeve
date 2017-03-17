@@ -143,11 +143,11 @@ class AblationStudy:
         # open files and put headers in it
         self.kld_file = open(join(self.ablation_dir, 'kld.txt'), mode='w')
         self.kld_file.write('FRAME_NUMBER,'
-                            'KLD_DREYEVE_WRT_SAL'
+                            'KLD_DREYEVE_WRT_SAL,'
                             'KLD_IMAGEFLOW_WRT_SAL,'
                             'KLD_IMAGESEG_WRT_SAL,'
-                            'KLD_FLOWSEG_WRT_SAL'
-                            'KLD_DREYEVE_WRT_FIX'
+                            'KLD_FLOWSEG_WRT_SAL,'
+                            'KLD_DREYEVE_WRT_FIX,'
                             'KLD_IMAGEFLOW_WRT_FIX,'
                             'KLD_IMAGESEG_WRT_FIX,'
                             'KLD_FLOWSEG_WRT_FIX'
@@ -155,11 +155,11 @@ class AblationStudy:
 
         self.cc_file = open(join(self.ablation_dir, 'cc.txt'), mode='w')
         self.cc_file.write('FRAME_NUMBER,'
-                           'CC_DREYEVE_WRT_SAL'
+                           'CC_DREYEVE_WRT_SAL,'
                            'CC_IMAGEFLOW_WRT_SAL,'
                            'CC_IMAGESEG_WRT_SAL,'
-                           'CC_FLOWSEG_WRT_SAL'
-                           'CC_DREYEVE_WRT_FIX'
+                           'CC_FLOWSEG_WRT_SAL,'
+                           'CC_DREYEVE_WRT_FIX,'
                            'CC_IMAGEFLOW_WRT_FIX,'
                            'CC_IMAGESEG_WRT_FIX,'
                            'CC_FLOWSEG_WRT_FIX'
@@ -217,11 +217,11 @@ class AblationStudy:
         """
 
         with open(join(self.ablation_dir, 'kld_mean.txt'), mode='w') as f:
-            f.write('KLD_DREYEVE_WRT_SAL'
+            f.write('KLD_DREYEVE_WRT_SAL,'
                     'KLD_IMAGEFLOW_WRT_SAL,'
                     'KLD_IMAGESEG_WRT_SAL,'
-                    'KLD_FLOWSEG_WRT_SAL'
-                    'KLD_DREYEVE_WRT_FIX'
+                    'KLD_FLOWSEG_WRT_SAL,'
+                    'KLD_DREYEVE_WRT_FIX,'
                     'KLD_IMAGEFLOW_WRT_FIX,'
                     'KLD_IMAGESEG_WRT_FIX,'
                     'KLD_FLOWSEG_WRT_FIX'
@@ -230,11 +230,11 @@ class AblationStudy:
             f.write('{},{},{},{},{},{},{},{}'.format(*avg))
 
         with open(join(self.ablation_dir, 'cc_mean.txt'), mode='w') as f:
-            f.write('CC_DREYEVE_WRT_SAL'
+            f.write('CC_DREYEVE_WRT_SAL,'
                     'CC_IMAGEFLOW_WRT_SAL,'
                     'CC_IMAGESEG_WRT_SAL,'
-                    'CC_FLOWSEG_WRT_SAL'
-                    'CC_DREYEVE_WRT_FIX'
+                    'CC_FLOWSEG_WRT_SAL,'
+                    'CC_DREYEVE_WRT_FIX,'
                     'CC_IMAGEFLOW_WRT_FIX,'
                     'CC_IMAGESEG_WRT_FIX,'
                     'CC_FLOWSEG_WRT_FIX'
