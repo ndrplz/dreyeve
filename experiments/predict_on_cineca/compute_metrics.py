@@ -9,7 +9,7 @@ from os.path import join
 
 from computer_vision_utils.io_helper import read_image
 
-from metrics import kld_numeric, cc_numeric
+from metrics import kld_numeric, cc_numeric, ig_numeric
 
 
 class MetricSaver:
@@ -42,6 +42,10 @@ class MetricSaver:
                               'CC_WRT_SAL,',
                               'CC_WRT_FIX,',
                               '\n']
+
+            self.ig_header = ['FRAME_NUMBER,',
+                              'IG'
+                              '\n']
         elif model == 'new':
             self.kld_header = ['FRAME_NUMBER,',
                                'KLD_DREYEVE_WRT_SAL,',
@@ -65,6 +69,13 @@ class MetricSaver:
                               'CC_SEG_WRT_FIX',
                               '\n']
 
+            self.ig_header = ['FRAME_NUMBER,',
+                              'IG_DREYEVE,',
+                              'IG_IMAGE,',
+                              'IG_FLOW,',
+                              'IG_SEG',
+                              '\n']
+
         # open files and put headers in it
         self.kld_file = open(join(self.metrics_dir, 'kld.txt'), mode='w')
         self.kld_file.write(('{}'*len(self.kld_header)).format(*self.kld_header))
@@ -72,10 +83,14 @@ class MetricSaver:
         self.cc_file = open(join(self.metrics_dir, 'cc.txt'), mode='w')
         self.cc_file.write(('{}'*len(self.cc_header)).format(*self.cc_header))
 
+        self.ig_file = open(join(self.metrics_dir, 'ig.txt'), mode='w')
+        self.ig_file.write(('{}'*len(self.ig_header)).format(*self.ig_header))
+
         # initialize lists to handle values for all frames
         # this is used at the end to compute averages
         self.kld_values = []
         self.cc_values = []
+        self.ig_values = []
 
     def feed(self, frame_number, predictions, groundtruth):
         """
@@ -104,6 +119,9 @@ class MetricSaver:
                              cc_numeric(gt_fix, p),
                              ]
 
+            this_frame_ig = [frame_number,
+                             ig_numeric(gt_fix, p, gt_sal)]
+
         elif self.model == 'new':
             p_dreyeve, p_image, p_flow, p_seg = predictions
 
@@ -129,11 +147,19 @@ class MetricSaver:
                              cc_numeric(gt_fix, p_seg)
                              ]
 
+            this_frame_ig = [frame_number,
+                             ig_numeric(gt_fix, p_dreyeve, gt_sal),
+                             ig_numeric(gt_fix, p_image, gt_sal),
+                             ig_numeric(gt_fix, p_flow, gt_sal),
+                             ig_numeric(gt_fix, p_seg, gt_sal)]
+
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
+        self.ig_file.write(('{},' * len(this_frame_ig) + '\n').format(*this_frame_ig))
 
         self.kld_values.append(this_frame_kld[1:])  # discard frame number
         self.cc_values.append(this_frame_cc[1:])  # discard frame number
+        self.ig_values.append(this_frame_ig[1:])  # discard frame number
 
     def save_mean_metrics(self):
         """
@@ -154,6 +180,14 @@ class MetricSaver:
 
             # compute average and save
             avg = np.mean(np.array(self.cc_values), axis=0).tolist()
+            f.write(('{},'*len(avg)).format(*avg))
+
+        with open(join(self.metrics_dir, 'ig_mean.txt'), mode='w') as f:
+            header = self.ig_header[1:]  # discard frame number
+            f.write(('{}'*len(header)).format(*header))
+
+            # compute average and save
+            avg = np.mean(np.array(self.ig_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
 
@@ -196,6 +230,13 @@ class AblationStudy:
                           'CC_FLOWSEG_WRT_FIX',
                           '\n']
 
+        self.ig_header = ['FRAME_NUMBER,',
+                          'IG_DREYEVE,',
+                          'IG_IMAGEFLOW,',
+                          'IG_IMAGESEG,',
+                          'IG_FLOWSEG',
+                          '\n']
+
         # open files and put headers in it
         self.kld_file = open(join(self.ablation_dir, 'kld.txt'), mode='w')
         self.kld_file.write(('{}' * len(self.kld_header)).format(*self.kld_header))
@@ -203,10 +244,14 @@ class AblationStudy:
         self.cc_file = open(join(self.ablation_dir, 'cc.txt'), mode='w')
         self.cc_file.write(('{}' * len(self.cc_header)).format(*self.cc_header))
 
+        self.ig_file = open(join(self.ablation_dir, 'ig.txt'), mode='w')
+        self.ig_file.write(('{}'*len(self.ig_header)).format(*self.ig_header))
+
         # initialize lists to handle values for all frames
         # this is used at the end to compute averages
         self.kld_values = []
         self.cc_values = []
+        self.ig_values = []
 
     def feed(self, frame_number, predictions, groundtruth):
         """
@@ -243,11 +288,19 @@ class AblationStudy:
                          cc_numeric(gt_fix, p_flow + p_seg),
                          ]
 
+        this_frame_ig = [frame_number,
+                         ig_numeric(gt_fix, p_dreyeve, gt_sal),
+                         ig_numeric(gt_fix, p_image + p_flow, gt_sal),
+                         ig_numeric(gt_fix, p_image + p_seg, gt_sal),
+                         ig_numeric(gt_fix, p_flow + p_seg, gt_sal)]
+
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
+        self.ig_file.write(('{},' * len(this_frame_ig) + '\n').format(*this_frame_ig))
 
         self.kld_values.append(this_frame_kld[1:])  # discard frame number
         self.cc_values.append(this_frame_cc[1:])  # discard frame number
+        self.ig_values.append(this_frame_ig[1:])  # discard frame number
 
     def save_mean_metrics(self):
         """
@@ -268,6 +321,14 @@ class AblationStudy:
 
             # compute average and save
             avg = np.mean(np.array(self.cc_values), axis=0).tolist()
+            f.write(('{},'*len(avg)).format(*avg))
+
+        with open(join(self.metrics_dir, 'ig_mean.txt'), mode='w') as f:
+            header = self.ig_header[1:]  # discard frame number
+            f.write(('{}'*len(header)).format(*header))
+
+            # compute average and save
+            avg = np.mean(np.array(self.ig_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
 
@@ -367,6 +428,8 @@ def compute_metrics_for_old_model(sequences):
 
             # feed the saver
             metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+            metric_saver.kld_file.flush()
+            metric_saver.cc_file.flush()
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -385,4 +448,3 @@ if __name__ == '__main__':
     sequences = range(start_seq, stop_seq + 1)
 
     compute_metrics_for_new_model(sequences)
-
