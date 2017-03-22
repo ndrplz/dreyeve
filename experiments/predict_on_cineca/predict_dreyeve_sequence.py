@@ -91,7 +91,7 @@ def load_dreyeve_sample(sequence_dir, sample, mean_dreyeve_image, frames_per_seq
 if __name__ == '__main__':
 
     frames_per_seq, h, w = 16, 448, 448
-    verbose = False
+    verbose = True
 
     # parse arguments
     parser = argparse.ArgumentParser()
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     # get the models
     dreyevenet_model = DreyeveNet(frames_per_seq=frames_per_seq, h=h, w=w)
     dreyevenet_model.compile(optimizer='adam', loss='kld')  # do we need this?
-    dreyevenet_model.load_weights('model.h5')  # load weights
+    dreyevenet_model.load_weights('dreyevenet_model.h5')  # load weights
 
     image_branch = [l for l in dreyevenet_model.layers if l.name == 'image_saliency_branch'][0]
     flow_branch = [l for l in dreyevenet_model.layers if l.name == 'optical_flow_saliency_branch'][0]
