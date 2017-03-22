@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 
 import argparse
 
@@ -7,12 +6,8 @@ import os
 from tqdm import tqdm
 from os.path import join
 
-from models import DreyeveNet
-from computer_vision_utils.io_helper import read_image, normalize
-from computer_vision_utils.tensor_manipulation import resize_tensor
-from computer_vision_utils.stitching import stitch_together
+from computer_vision_utils.io_helper import read_image
 
-from utils import seg_to_colormap
 from metrics import kld_numeric, cc_numeric
 
 
