@@ -9,7 +9,10 @@ def kld_numeric(y_true, y_pred):
     :param y_pred: predictions, having shape (1, 1, h, w)
     :return: numeric kld
     """
-    eps = np.finfo(float).eps
+    y_true = y_true.astype(np.float32)
+    y_pred = y_pred.astype(np.float32)
+
+    eps = np.finfo(np.float32).eps
 
     P = y_pred / (eps + np.sum(y_pred))  # prob
     Q = y_true / (eps + np.sum(y_true))  # prob
@@ -27,7 +30,10 @@ def cc_numeric(y_true, y_pred):
     :param y_pred: predictions, having shape (1, 1, h, w)
     :return: numeric cc
     """
-    eps = np.finfo(float).eps
+    y_true = y_true.astype(np.float32)
+    y_pred = y_pred.astype(np.float32)
+
+    eps = np.finfo(np.float32).eps
 
     P = y_pred / (eps + np.sum(y_pred))  # prob
     Q = y_true / (eps + np.sum(y_true))  # prob
