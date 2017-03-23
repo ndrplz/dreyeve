@@ -323,7 +323,7 @@ class AblationStudy:
             avg = np.nanmean(np.array(self.cc_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
-        with open(join(self.metrics_dir, 'ig_mean.txt'), mode='w') as f:
+        with open(join(self.ablation_dir, 'ig_mean.txt'), mode='w') as f:
             header = self.ig_header[1:]  # discard frame number
             f.write(('{}'*len(header)).format(*header))
 
@@ -448,4 +448,4 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_old_model(sequences)
+    compute_metrics_for_new_model(sequences)
