@@ -171,7 +171,7 @@ class MetricSaver:
             f.write(('{}'*len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.kld_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.kld_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
         with open(join(self.metrics_dir, 'cc_mean.txt'), mode='w') as f:
@@ -179,7 +179,7 @@ class MetricSaver:
             f.write(('{}'*len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.cc_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.cc_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
         with open(join(self.metrics_dir, 'ig_mean.txt'), mode='w') as f:
@@ -187,7 +187,7 @@ class MetricSaver:
             f.write(('{}'*len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.ig_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.ig_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
 
@@ -312,7 +312,7 @@ class AblationStudy:
             f.write(('{}' * len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.kld_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.kld_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
         with open(join(self.ablation_dir, 'cc_mean.txt'), mode='w') as f:
@@ -320,7 +320,7 @@ class AblationStudy:
             f.write(('{}' * len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.cc_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.cc_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
         with open(join(self.metrics_dir, 'ig_mean.txt'), mode='w') as f:
@@ -328,7 +328,7 @@ class AblationStudy:
             f.write(('{}'*len(header)).format(*header))
 
             # compute average and save
-            avg = np.mean(np.array(self.ig_values), axis=0).tolist()
+            avg = np.nanmean(np.array(self.ig_values), axis=0).tolist()
             f.write(('{},'*len(avg)).format(*avg))
 
 
@@ -342,8 +342,8 @@ def compute_metrics_for_new_model(sequences):
     # some variables
     gt_h, gt_w = 1080, 1920
 
-    pred_dir = 'Z:\PREDICTIONS_2017'
-    dreyeve_dir = 'Z:\DATA'
+    pred_dir = 'Z:\\PREDICTIONS_2017'
+    dreyeve_dir = 'Z:\\DATA'
 
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
@@ -362,7 +362,7 @@ def compute_metrics_for_new_model(sequences):
         metric_saver = MetricSaver(pred_dir, seq, model='new')
         ablation = AblationStudy(pred_dir, seq)
 
-        for fr in tqdm(xrange(15, 7500 - 1)):
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
             # load predictions
             p_dreyeve = np.squeeze(np.load(join(dir_pred_dreyevenet, '{:06}.npz'.format(fr)))['arr_0'])
             p_image = np.squeeze(np.load(join(dir_pred_image, '{:06}.npz'.format(fr)))['arr_0'])
@@ -400,7 +400,7 @@ def compute_metrics_for_old_model(sequences):
     gt_h, gt_w = 1080, 1920
 
     pred_dir = 'Z:\\PREDICTIONS\\architecture7'
-    dreyeve_dir = 'Z:\DATA'
+    dreyeve_dir = 'Z:\\DATA'
 
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
@@ -415,7 +415,7 @@ def compute_metrics_for_old_model(sequences):
         print 'Computing metrics...'
         metric_saver = MetricSaver(pred_dir, seq, model='old')
 
-        for fr in tqdm(xrange(15, 7500 - 1)):
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
             # load predictions
             p = read_image(join(seq_pred_dir, '{:06}.png'.format(fr+1)), channels_first=False, color=False,
                            resize_dim=(gt_h, gt_w))
@@ -430,6 +430,7 @@ def compute_metrics_for_old_model(sequences):
             metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
             metric_saver.kld_file.flush()
             metric_saver.cc_file.flush()
+            metric_saver.ig_file.flush()
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -447,4 +448,4 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_new_model(sequences)
+    compute_metrics_for_old_model(sequences)

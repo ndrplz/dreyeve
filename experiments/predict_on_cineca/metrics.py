@@ -1,4 +1,5 @@
 import numpy as np
+import cv2
 
 
 def kld_numeric(y_true, y_pred):
@@ -10,10 +11,10 @@ def kld_numeric(y_true, y_pred):
     :param y_pred: predictions.
     :return: numeric kld
     """
-    y_true = y_true.astype(np.float64)
-    y_pred = y_pred.astype(np.float64)
+    y_true = y_true.astype(np.float32)
+    y_pred = y_pred.astype(np.float32)
 
-    eps = np.finfo(np.float64).eps
+    eps = np.finfo(np.float32).eps
 
     P = y_pred / (eps + np.sum(y_pred))  # prob
     Q = y_true / (eps + np.sum(y_true))  # prob
@@ -32,18 +33,23 @@ def cc_numeric(y_true, y_pred):
     :param y_pred: predictions.
     :return: numeric cc.
     """
-    y_true = y_true.astype(np.float64)
-    y_pred = y_pred.astype(np.float64)
+    y_pred = y_pred.astype(np.float32)
+    y_true = y_true.astype(np.float32)
 
-    eps = np.finfo(np.float64).eps
+    eps = np.finfo(np.float32).eps
 
-    P = y_pred / (eps + np.sum(y_pred))  # normalization
-    Q = y_true / (eps + np.sum(y_true))  # normalization
+    cv2.normalize(y_pred, dst=y_pred, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+    cv2.normalize(y_true, dst=y_true, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
-    N = P.size
-    cc = np.dot(P.flatten() - np.mean(P), Q.flatten() - np.mean(Q)) / (eps + np.std(P) * np.std(Q)) / N
+    y_pred = y_pred.ravel()
+    y_true = y_true.ravel()
 
-    return cc
+    y_pred = (y_pred - np.mean(y_pred)) / (eps + np.std(y_pred))
+    y_true = (y_true - np.mean(y_true)) / (eps + np.std(y_true))
+
+    cc = np.corrcoef(y_pred, y_true)
+
+    return cc[0][1]
 
 
 def ig_numeric(y_true, y_pred, y_base):
@@ -68,7 +74,7 @@ def ig_numeric(y_true, y_pred, y_base):
     B = y_base / (eps + np.sum(y_base))  # prob
 
     N = P.size
-    ig = np.sum(Q * (np.log2(eps + P) - np.log2(eps + B))) / N
+    ig = np.sum(Q * (np.log2((eps + P)/(eps + B)))) / N
 
     return ig
 
