@@ -69,12 +69,17 @@ def ig_numeric(y_true, y_pred, y_base):
 
     eps = np.finfo(np.float32).eps
 
+    y_pred -= np.min(y_pred)
+    y_pred /= np.max(y_pred)
+
+    y_base -= np.min(y_base)
+    y_base /= np.max(y_base)
+
     P = y_pred / (eps + np.sum(y_pred))  # prob
-    Q = y_true / (eps + np.sum(y_true))  # prob
     B = y_base / (eps + np.sum(y_base))  # prob
 
-    N = P.size
-    ig = np.sum(Q * (np.log2((eps + P)/(eps + B)))) / N
+    Q_idx = (y_true > 0)
+    ig = np.mean(np.log2(eps + P[Q_idx]) - np.log2(eps + B[Q_idx]))
 
     return ig
 
