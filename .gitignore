@@ -105,10 +105,9 @@ ENV/
 *.xml
 *.iml
 semseg/cineca_pids.txt
-experiments/predictions
-experiments/checkpoints
-experiments/move_dreyeve_dirs.py
-experiments/logs
+experiments/train/predictions
+experiments/train/checkpoints
+experiments/train/logs
 experiments/predict_on_cineca/out_pred/**
 *.h5
 experiments/train_cineca_pids.txt
