@@ -16,6 +16,7 @@ if __name__ == '__main__':
     sgd = SGD(lr=1e-3, decay=0.0005, momentum=0.9, nesterov=True)
     print("Compile ML-Net Model")
     model.compile(sgd, loss)
+    model.summary()
 
     print("Training ML-Net")
     model.fit_generator(generator=generate_batch(batchsize=batchsize,

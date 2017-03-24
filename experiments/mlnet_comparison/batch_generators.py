@@ -7,7 +7,7 @@ from utils import preprocess_images, preprocess_maps
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
 from config import DREYEVE_DIR
-from config import shape_r, shape_c
+from config import shape_r, shape_c, shape_r_gt, shape_c_gt
 
 
 def load_batch(batchsize, mode, gt_type):
@@ -47,7 +47,7 @@ def load_batch(batchsize, mode, gt_type):
                            '{:06d}.png'.format(fr+1)))
 
     X = preprocess_images(x_list, shape_r=shape_r, shape_c=shape_c)
-    Y = preprocess_maps(y_list, shape_r=shape_r, shape_c=shape_c)
+    Y = preprocess_maps(y_list, shape_r=shape_r_gt, shape_c=shape_c_gt)
 
     # TODO apply random mirroring?
 

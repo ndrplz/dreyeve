@@ -108,6 +108,9 @@ semseg/cineca_pids.txt
 experiments/train/predictions
 experiments/train/checkpoints
 experiments/train/logs
+experiments/mlnet_comparison/predictions
+experiments/mlnet_comparison/checkpoints
+experiments/mlnet_comparison/logs
 experiments/predict_on_cineca/out_pred/**
 *.h5
 experiments/train_cineca_pids.txt
