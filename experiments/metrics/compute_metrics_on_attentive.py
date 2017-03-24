@@ -1,9 +1,5 @@
-import cv2
 import numpy as np
-from os.path import exists, join
-import csv
-import glob
-import os
+from os.path import join
 import csv
 
 
@@ -19,7 +15,7 @@ if __name__ == '__main__':
     cc_f_by_f,  kl_f_by_f   = [], []
     cc_all,     kl_all      = [], []
 
-    prediction_root = '//quesada/f/DREYEVE/PREDICTIONS_2017'
+    prediction_root = 'Z:/PREDICTIONS_2017'
     test_runs_measures = [(r, join(prediction_root, '{:02d}'.format(r))) for r in range(38, 75)]
 
     for (r, run_dir) in test_runs_measures:
@@ -65,4 +61,3 @@ if __name__ == '__main__':
     print(mean_all_kl_attentive[:4])
     print('KLD_DREYEVE_WRT_FIX,KLD_IMAGE_WRT_FIX,KLD_FLOW_WRT_FIX,KLD_SEG_WRT_FIX')
     print(mean_all_kl_attentive[4:])
-
