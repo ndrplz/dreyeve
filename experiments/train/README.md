@@ -1,4 +1,4 @@
-# experiments
+# experiments/train
 Python project containing the code to train DreyeveNet.
 
 * `config.py` holds some configuration variables;
