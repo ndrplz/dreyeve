@@ -117,3 +117,4 @@ experiments/train_cineca_pids.txt
 matlab/blend/out
 experiments/predict_on_cineca/cineca_pids.txt
 *.asv
+*.pkl
