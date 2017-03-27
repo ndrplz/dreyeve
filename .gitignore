@@ -110,6 +110,7 @@ experiments/train/checkpoints
 experiments/train/logs
 experiments/mlnet_comparison/predictions
 experiments/mlnet_comparison/checkpoints
+experiments/mlnet_comparison/out_pred
 experiments/mlnet_comparison/logs
 experiments/predict_on_cineca/out_pred/**
 *.h5
