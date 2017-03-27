@@ -9,10 +9,11 @@ if __name__ == '__main__':
     # do not change these
     sequences_train = xrange(1, 38 + 1)
     sequences_test = xrange(39, 74 + 1)
-    predictions_dir = 'Z:/PREDICTIONS/architecture7'
+    predictions_dir = 'Z:/PREDICTIONS_2017'
 
     # change these
-    metrics_to_merge = ['metrics/kld_mean.txt', 'metrics/cc_mean.txt', 'metrics/ig_mean.txt']
+    metrics_to_merge = ['metrics/kld_mean.txt', 'metrics/cc_mean.txt', 'metrics/ig_mean.txt',
+                        'ablation/kld_mean.txt', 'ablation/cc_mean.txt', 'ablation/ig_mean.txt']
     mode = 'test'
 
     assert mode in ['train', 'test'], 'Non valid mode: {}'.format(mode)
@@ -36,7 +37,7 @@ if __name__ == '__main__':
         # mean on all sequences
         means = np.mean(np.array(metrics, dtype=np.float32), axis=0, keepdims=False)
         # write
-        with open(join(predictions_dir, '{}_{}'.format(mode, os.path.basename(metric_filename))),
+        with open(join(predictions_dir, '{}_{}'.format(mode, metric_filename.replace('/', '_'))),
                   mode='w') as f:
             f.write(header)
             f.write(('{},'*means.size).format(*list(means)))
