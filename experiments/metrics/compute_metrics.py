@@ -428,12 +428,54 @@ def compute_metrics_for_old_model(sequences):
 
             # feed the saver
             metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
-            metric_saver.kld_file.flush()
-            metric_saver.cc_file.flush()
-            metric_saver.ig_file.flush()
 
         # save mean values
         metric_saver.save_mean_metrics()
+
+
+def compute_metrics_for_mlnet_model(sequences):
+    """
+    Function to compute metrics out of the mlnet model (Marcy).
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_MLNET'
+    dreyeve_dir = 'Z:\\DATA'
+
+    for seq in sequences:
+        print 'Processing sequence {}'.format(seq)
+
+        # prediction dirs
+        seq_pred_dir = join(pred_dir, '{:02d}'.format(seq), 'output')
+
+        # gt dirs
+        seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+        seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        print 'Computing metrics...'
+        metric_saver = MetricSaver(pred_dir, seq, model='old')
+
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
+            # load predictions
+            p = read_image(join(seq_pred_dir, '{:06}.png'.format(fr+1)), channels_first=False, color=False,
+                           resize_dim=(gt_h, gt_w))
+
+            # load gts
+            gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+            gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+
+            # feed the saver
+            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+
+        # save mean values
+        metric_saver.save_mean_metrics()
+
 
 
 if __name__ == '__main__':
