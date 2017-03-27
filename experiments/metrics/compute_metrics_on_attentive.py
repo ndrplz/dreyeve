@@ -23,12 +23,12 @@ if __name__ == '__main__':
         with open(join(run_dir, 'metrics', 'cc.txt'), 'rb') as f:
             reader = csv.reader(f)
             headers = reader.next()  # store headers
-            cc_f_by_f = np.array([map(np.float32, row) for row in reader])
+            cc_f_by_f = {int(row[0]): np.array(row[1:-1], dtype=np.float32) for row in reader}
 
         with open(join(run_dir, 'metrics', 'kld.txt'), 'r') as f:
             reader = csv.reader(f)
             headers = reader.next()  # store headers
-            kl_f_by_f = np.array([map(np.float32, row) for row in reader])
+            kl_f_by_f = {int(row[0]): np.array(row[1:-1], dtype=np.float32) for row in reader}
 
         # make a list with all the frames of this run marked as 'keep'
         # each row of `keep_this_run` is a list of four entries [num_run, start_frame, end_frame, subsequence_class]
@@ -39,11 +39,11 @@ if __name__ == '__main__':
         frames_keep_this_run = set(frames_keep_this_run)
 
         # keep only metrics for frames in the selected list (these are frames marked as attentive)
-        filtered_cc = np.array([cc_row for cc_row in cc_f_by_f if int(cc_row[0]) in frames_keep_this_run])
-        filtered_kl = np.array([kl_row for kl_row in kl_f_by_f if int(kl_row[0]) in frames_keep_this_run])
+        filtered_cc = np.array([cc_values for key, cc_values in cc_f_by_f.iteritems() if key in frames_keep_this_run])
+        filtered_kl = np.array([kld_values for key, kld_values in kl_f_by_f.iteritems() if key in frames_keep_this_run])
 
-        mean_cc_attentive_this_run = np.mean(filtered_cc, axis=0)[1:]  # skip first col that is the frame index
-        mean_kl_attentive_this_run = np.mean(filtered_kl, axis=0)[1:]  # skip first col that is the frame index
+        mean_cc_attentive_this_run = np.nanmean(filtered_cc, axis=0)
+        mean_kl_attentive_this_run = np.nanmean(filtered_kl, axis=0)
 
         cc_all.append(mean_cc_attentive_this_run)
         kl_all.append(mean_kl_attentive_this_run)
