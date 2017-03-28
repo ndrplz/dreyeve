@@ -13,3 +13,9 @@ This relies on txt files precomputed through `compute_metrics.py`
 
 * `compute_metrics_on_attentive.py` script to compute metrics on attentive subsequences only.
 This relies on txt files precomputed through `compute_metrics.py`
+
+* `eval_semseg_by_sequence.py` script that proposes random samples of semantic segmentation to the user
+that has to decide if is good or bad pressing 'g' or 'b' respectively.
+Selected sequences (where segmentation is good) are used to test the
+semantic segmentation performance on an additional ablation study where
+terrible segmentations are excluded.
