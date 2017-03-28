@@ -19,3 +19,9 @@ that has to decide if is good or bad pressing 'g' or 'b' respectively.
 Selected sequences (where segmentation is good) are used to test the
 semantic segmentation performance on an additional ablation study where
 terrible segmentations are excluded.
+
+* `calc_mean_gt_for_new_gt.py` script that finds the mean groundtruth fixation map,
+which is considered a baseline.
+
+* `aggregate_metrics_by_scenario.py` script that merges a metric in
+different scenarios, and prints a mean for all couples (time_of_day, wheather)
