@@ -19,10 +19,11 @@ class MetricSaver:
     Params:
     pred_dir: the prediction directory
     seq: the number of the sequence
-    model: choose among ['old','new']
+    model: choose among ['old', 'new', 'central_gaussian', 'mean_gt']
     """
     def __init__(self, pred_dir, seq, model):
-        assert model in ['old', 'new'], 'model should be either `old` or `new`'
+        models = ['old', 'new', 'central_gaussian', 'mean_gt']
+        assert model in models, 'model should be one of {}'.format(models)
 
         self.model = model
 
@@ -32,7 +33,7 @@ class MetricSaver:
             os.makedirs(self.metrics_dir)
 
         # build headers
-        if model == 'old':
+        if self.model == 'old':
             self.kld_header = ['FRAME_NUMBER,',
                                'KLD_WRT_SAL,',
                                'KLD_WRT_FIX,',
@@ -46,7 +47,7 @@ class MetricSaver:
             self.ig_header = ['FRAME_NUMBER,',
                               'IG'
                               '\n']
-        elif model == 'new':
+        elif self.model == 'new':
             self.kld_header = ['FRAME_NUMBER,',
                                'KLD_DREYEVE_WRT_SAL,',
                                'KLD_IMAGE_WRT_SAL,',
@@ -76,6 +77,36 @@ class MetricSaver:
                               'IG_SEG',
                               '\n']
 
+        elif self.model == 'central_gaussian':
+            self.kld_header = ['FRAME_NUMBER,',
+                               'KLD_WRT_SAL,',
+                               'KLD_WRT_FIX,',
+                               '\n']
+
+            self.cc_header = ['FRAME_NUMBER,',
+                              'CC_WRT_SAL,',
+                              'CC_WRT_FIX,',
+                              '\n']
+
+            self.ig_header = ['FRAME_NUMBER,',
+                              'IG'
+                              '\n']
+
+        elif self.model == 'mean_gt':
+            self.kld_header = ['FRAME_NUMBER,',
+                               'KLD_WRT_SAL,',
+                               'KLD_WRT_FIX,',
+                               '\n']
+
+            self.cc_header = ['FRAME_NUMBER,',
+                              'CC_WRT_SAL,',
+                              'CC_WRT_FIX,',
+                              '\n']
+
+            self.ig_header = ['FRAME_NUMBER,',
+                              'IG'
+                              '\n']
+
         # open files and put headers in it
         self.kld_file = open(join(self.metrics_dir, 'kld.txt'), mode='w')
         self.kld_file.write(('{}'*len(self.kld_header)).format(*self.kld_header))
@@ -96,11 +127,11 @@ class MetricSaver:
         """
         Feeds the saver with new predictions and groundtruth data to evaluate.
 
-        :param frame_number: the index of the frame in evaluation
+        :param frame_number: the index of the frame in evaluation.
         :param predictions: a list of numpy array encoding predictions.
-            If self.model == 'old', a singleton list like [model_prediction]
-            is expected, whereas if self.model == 'new' a list like
-            [p_dreyeve, p_image, p_flow, p_seg] is expected.
+            If self.model in ['old', 'central_gaussian'], a singleton list like [model_prediction] is expected.
+            If self.model == 'new' a list like [p_dreyeve, p_image, p_flow, p_seg] is expected.
+            If self.model == 'mean_gt' a list like [mean_gt_sal, mean_gt_fix] is expected.
         :param groundtruth: a list like [gt_sal, gt_fix]
         """
 
@@ -152,6 +183,38 @@ class MetricSaver:
                              ig_numeric(gt_fix, p_image, gt_sal),
                              ig_numeric(gt_fix, p_flow, gt_sal),
                              ig_numeric(gt_fix, p_seg, gt_sal)]
+
+        if self.model == 'central_gaussian':
+            p = predictions[0]
+
+            this_frame_kld = [frame_number,
+                              kld_numeric(gt_sal, p),
+                              kld_numeric(gt_fix, p),
+                              ]
+
+            this_frame_cc = [frame_number,
+                             cc_numeric(gt_sal, p),
+                             cc_numeric(gt_fix, p),
+                             ]
+
+            this_frame_ig = [frame_number,
+                             ig_numeric(gt_fix, p, gt_sal)]
+
+        if self.model == 'mean_gt':
+            mean_gt_sal, mean_gt_fix = predictions
+
+            this_frame_kld = [frame_number,
+                              kld_numeric(gt_sal, mean_gt_sal),
+                              kld_numeric(gt_fix, mean_gt_fix),
+                              ]
+
+            this_frame_cc = [frame_number,
+                             cc_numeric(gt_sal, mean_gt_sal),
+                             cc_numeric(gt_fix, mean_gt_fix),
+                             ]
+
+            this_frame_ig = [frame_number,
+                             0]  # doesn't make sense in this case
 
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
@@ -477,6 +540,88 @@ def compute_metrics_for_mlnet_model(sequences):
         metric_saver.save_mean_metrics()
 
 
+def compute_metrics_for_central_gaussian(sequences):
+    """
+    Function to compute metrics using a central gaussian as prediction.
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_CENTRAL_GAUSSIAN'
+    dreyeve_dir = 'Z:\\DATA'
+
+    central_gaussian = read_image(join(dreyeve_dir, 'gaussian_baseline.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
+    for seq in sequences:
+        print 'Processing sequence {}'.format(seq)
+
+        # gt dirs
+        seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+        seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        print 'Computing metrics...'
+        metric_saver = MetricSaver(pred_dir, seq, model='central_gaussian')
+
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
+            # load gts
+            gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+            gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+
+            # feed the saver
+            metric_saver.feed(fr, predictions=[central_gaussian], groundtruth=[gt_sal, gt_fix])
+
+        # save mean values
+        metric_saver.save_mean_metrics()
+
+
+def compute_metrics_for_mean_gt(sequences):
+    """
+    Function to compute metrics using the mean training gt as prediction.
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_MEAN_TRAIN_GT'
+    dreyeve_dir = 'Z:\\DATA'
+
+    mean_gt_sal = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+    mean_gt_fix = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
+
+    for seq in sequences:
+        print 'Processing sequence {}'.format(seq)
+
+        # gt dirs
+        seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+        seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        print 'Computing metrics...'
+        metric_saver = MetricSaver(pred_dir, seq, model='mean_gt')
+
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
+            # load gts
+            gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+            gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+
+            # feed the saver
+            metric_saver.feed(fr, predictions=[mean_gt_sal, mean_gt_fix], groundtruth=[gt_sal, gt_fix])
+
+        # save mean values
+        metric_saver.save_mean_metrics()
+
 
 if __name__ == '__main__':
 
@@ -490,4 +635,4 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_new_model(sequences)
+    compute_metrics_for_mean_gt(sequences)
