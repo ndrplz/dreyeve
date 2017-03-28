@@ -14,11 +14,17 @@ if __name__ == '__main__':
     # change these
     metrics_to_merge = ['metrics/kld_mean.txt', 'metrics/cc_mean.txt', 'metrics/ig_mean.txt',
                         'ablation/kld_mean.txt', 'ablation/cc_mean.txt', 'ablation/ig_mean.txt']
-    mode = 'test'
+    mode = 'only_good_semseg'
 
-    assert mode in ['train', 'test'], 'Non valid mode: {}'.format(mode)
+    assert mode in ['train', 'test', 'only_good_semseg'], 'Non valid mode: {}'.format(mode)
 
-    sequences = sequences_train if mode == 'train' else sequences_test
+    sequences = []
+    if mode == 'train':
+        sequences = sequences_train
+    elif mode == 'test':
+        sequences = sequences_test
+    elif mode == 'only_good_semseg':
+        sequences = [40, 44, 47, 49, 50, 60, 63, 64, 69, 70]
 
     for metric_filename in metrics_to_merge:
         metrics = []
