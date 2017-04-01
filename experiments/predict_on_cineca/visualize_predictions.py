@@ -59,7 +59,7 @@ def sample_signature(sequences, allowed_frames, force_sample_steering):
     :param sequences: sequences to sample from.
     :param allowed_frames: range of allowed frames to sample the sequence start from.
     :param force_sample_steering: whether or not to sample sequences while the car is steering.
-    :return: a tuple like ().
+    :return: a tuple like (num_run, start).
     """
     # get random sequence
     num_run = choice(sequences)
@@ -88,10 +88,11 @@ def sample_signature(sequences, allowed_frames, force_sample_steering):
 
 def load(seq, frame):
     """
+    Function to load a 16-frames sequence to plot
 
-    :param seq:
-    :param frame:
-    :return:
+    :param seq: the sequence number
+    :param frame: the frame inside the sequence
+    :return: a stitched image to show
     """
 
     small_size = (270, 480)
@@ -147,4 +148,4 @@ if __name__ == '__main__':
 
             # visualize
             cv2.imshow('prediction', to_show)
-            cv2.waitKey(1)
+            cv2.waitKey()
