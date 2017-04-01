@@ -7,37 +7,53 @@ import numpy as np
 from os.path import join
 from train.config import dreyeve_test_seq
 
-import operator
+
+def dump_dict_to_csv(dict):
+    with open('dump.csv', mode='w') as f:
+        for scenario, subdict in dict.iteritems():
+            for subkey, value in subdict.iteritems():
+                f.write('{},{},{},{}\n'.format(scenario, subkey[0], subkey[1], value))
+
 
 if __name__ == '__main__':
 
     dreyeve_dir = 'Z:/'
-    scenarios = ['Downtown', 'Countryside', 'Highway']
+    aggregate_by = 1  # 0 for time_of_day, 1 for weather, 2 for scenario
     metric_to_merge = 'metrics/kld_mean.txt'
 
     # read design file and create dictionaries
     with open(join(dreyeve_dir, 'dr(eye)ve_design.txt')) as f:
         content = f.readlines()
 
-    design = {'Downtown': {}, 'Countryside': {}, 'Highway': {}}
+    design = {}
     for c in content:
-        seq, time_of_day, wheather, scenario, driver, set, _ = c.split()
+        seq, time_of_day, weather, key, driver, set, _ = c.split()
         seq = int(seq)
 
+        possible_aggregations = [time_of_day, weather, key]
+
+        aggr_key = possible_aggregations[aggregate_by]
+
+        possible_aggregations.pop(aggregate_by)
+        sub_key = tuple(possible_aggregations)
+
         if seq in dreyeve_test_seq:
-            d = design[scenario]
+            subdict = design.get(aggr_key)
 
-            key = (time_of_day, wheather)
-            val = d.get(key)
+            if not subdict:
+                design[aggr_key] = {}
+                subdict = design.get(aggr_key)
+
+            val = subdict.get(sub_key)
             if val:
-                d[key].append(seq)
+                subdict[sub_key].append(seq)
             else:
-                d[key] = [seq]
+                subdict[sub_key] = [seq]
 
-    for scenario in design:
-        scenario_dict = design[scenario]
+    for key in design:
+        scenario_dict = design[key]
 
-        for key, sequences in scenario_dict.iteritems():
+        for aggr_key, sequences in scenario_dict.iteritems():
             metrics = []
             for seq in sequences:
                 header = ''
@@ -56,11 +72,9 @@ if __name__ == '__main__':
                 metrics.append(numbers)
             # mean on all sequences of this context
             means = np.mean(np.array(metrics, dtype=np.float32), axis=0, keepdims=False)
-            scenario_dict[key] = means[0]
+            scenario_dict[aggr_key] = means[4:]
 
-    for key, d in design.iteritems():
-        print key
+    for aggr_key, subdict in design.iteritems():
+        print aggr_key
 
-        # sort by kld
-        sorted_d = sorted(d.items(), key=operator.itemgetter(1))
-        print sorted_d
+        print np.mean(np.array(subdict.values()), axis=0)
