@@ -120,3 +120,6 @@ experiments/predict_on_cineca/cineca_pids.txt
 *.asv
 *.pkl
 experiments/mlnet_comparison/cineca_pids.txt
+experiments/metrics/load_dump.m
+experiments/metrics/plots_by_aggregating_stuff.m
+matlab/create_ground_truth/script_for_fixation_images.m
