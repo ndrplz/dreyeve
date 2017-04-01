@@ -6,6 +6,7 @@ import argparse
 import os
 from tqdm import tqdm
 from os.path import join
+from glob import glob
 
 from computer_vision_utils.io_helper import read_image
 
@@ -19,10 +20,10 @@ class MetricSaver:
     Params:
     pred_dir: the prediction directory
     seq: the number of the sequence
-    model: choose among ['old', 'new', 'central_gaussian', 'mean_gt']
+    model: choose among ['old', 'new', 'central_gaussian', 'mean_gt', 'competitor']
     """
     def __init__(self, pred_dir, seq, model):
-        models = ['old', 'new', 'central_gaussian', 'mean_gt']
+        models = ['old', 'new', 'central_gaussian', 'mean_gt', 'competitor']
         assert model in models, 'model should be one of {}'.format(models)
 
         self.model = model
@@ -107,6 +108,21 @@ class MetricSaver:
                               'IG'
                               '\n']
 
+        elif self.model == 'competitor':
+            self.kld_header = ['FRAME_NUMBER,',
+                               'KLD_WRT_SAL,',
+                               'KLD_WRT_FIX,',
+                               '\n']
+
+            self.cc_header = ['FRAME_NUMBER,',
+                              'CC_WRT_SAL,',
+                              'CC_WRT_FIX,',
+                              '\n']
+
+            self.ig_header = ['FRAME_NUMBER,',
+                              'IG'
+                              '\n']
+
         # open files and put headers in it
         self.kld_file = open(join(self.metrics_dir, 'kld.txt'), mode='w')
         self.kld_file.write(('{}'*len(self.kld_header)).format(*self.kld_header))
@@ -129,7 +145,7 @@ class MetricSaver:
 
         :param frame_number: the index of the frame in evaluation.
         :param predictions: a list of numpy array encoding predictions.
-            If self.model in ['old', 'central_gaussian'], a singleton list like [model_prediction] is expected.
+            If self.model in ['old', 'central_gaussian', 'competitor'], a singleton list like [model_prediction] is expected.
             If self.model == 'new' a list like [p_dreyeve, p_image, p_flow, p_seg] is expected.
             If self.model == 'mean_gt' a list like [mean_gt_sal, mean_gt_fix] is expected.
         :param groundtruth: a list like [gt_sal, gt_fix]
@@ -215,6 +231,22 @@ class MetricSaver:
 
             this_frame_ig = [frame_number,
                              0]  # doesn't make sense in this case
+
+        if self.model == 'competitor':
+            p = predictions[0]
+
+            this_frame_kld = [frame_number,
+                              kld_numeric(gt_sal, p),
+                              kld_numeric(gt_fix, p),
+                              ]
+
+            this_frame_cc = [frame_number,
+                             cc_numeric(gt_sal, p),
+                             cc_numeric(gt_fix, p),
+                             ]
+
+            this_frame_ig = [frame_number,
+                             ig_numeric(gt_fix, p, gt_sal)]
 
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
@@ -598,7 +630,6 @@ def compute_metrics_for_mean_gt(sequences):
     mean_gt_fix = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
-
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -623,7 +654,168 @@ def compute_metrics_for_mean_gt(sequences):
         metric_saver.save_mean_metrics()
 
 
+def compute_metrics_for_wang2015consistent(sequences):
+    """
+    Function to compute metrics from model [1].
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_wang2015consistent'
+    dreyeve_dir = 'Z:\\DATA'
+
+    pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/videosal-master/final_results/**/saliency/*.bmp')
+
+    print 'Computing metrics...'
+    last_seq = 0
+    for index in tqdm(xrange(0, len(pred_list))):
+        pred_img = pred_list[index]
+
+        # recover sequence number
+        seq = int(os.path.basename(os.path.dirname(os.path.dirname(pred_img))).split('_')[1])
+
+        # if sequence is new, recover some variables
+        if seq != last_seq:    # save mean values
+            if 'metric_saver' in locals():
+                metric_saver.save_mean_metrics()
+
+            metric_saver = MetricSaver(pred_dir, seq, model='competitor')
+            last_seq = seq
+
+            # gt dirs
+            seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+            seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        # get frame number
+        fr = int(os.path.basename(pred_img).split('.')[0])
+
+        # load prediction
+        p = read_image(pred_img, channels_first=False, color=False, resize_dim=(gt_h, gt_w))
+
+        # load gts
+        gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+        gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+
+        # feed the saver
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+    metric_saver.save_mean_metrics()
+
+
+def compute_metrics_for_wang2015saliency(sequences):
+    """
+    Function to compute metrics from model [2].
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_wang2015saliency'
+    dreyeve_dir = 'Z:\\DATA'
+
+    pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/SaliencySeg-master/code/final_results/**/final_saliency/*.bmp')
+
+    print 'Computing metrics...'
+    last_seq = 0
+    for index in tqdm(xrange(0, len(pred_list))):
+        pred_img = pred_list[index]
+
+        # recover sequence number
+        seq = int(os.path.basename(os.path.dirname(os.path.dirname(pred_img))).split('_')[1])
+
+        # if sequence is new, recover some variables
+        if seq != last_seq:
+            if 'metric_saver' in locals():
+                metric_saver.save_mean_metrics()
+
+            metric_saver = MetricSaver(pred_dir, seq, model='competitor')
+            last_seq = seq
+
+            # gt dirs
+            seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+            seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        # get frame number
+        fr = int(os.path.basename(pred_img).split('.')[0])
+
+        # load prediction
+        p = read_image(pred_img, channels_first=False, color=False, resize_dim=(gt_h, gt_w))
+
+        # load gts
+        gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+        gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+
+        # feed the saver
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+
+    # save mean values
+    metric_saver.save_mean_metrics()
+
+
+def compute_metrics_for_mathe(sequences):
+    """
+    Function to compute metrics from model [3].
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_mathe'
+    dreyeve_dir = 'Z:\\DATA'
+
+    pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/action_in_the_eye/RESULT/**/*.png')
+
+    print 'Computing metrics...'
+    last_seq = 0
+    for index in tqdm(xrange(0, len(pred_list))):
+        pred_img = pred_list[index]
+
+        # recover sequence number
+        seq = int(os.path.basename(os.path.dirname(pred_img)).split('_')[0])
+
+        # if sequence is new, recover some variables
+        if seq != last_seq:
+            if 'metric_saver' in locals():
+                metric_saver.save_mean_metrics()
+
+            metric_saver = MetricSaver(pred_dir, seq, model='competitor')
+            last_seq = seq
+
+            # gt dirs
+            seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+            seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        # get frame number
+        fr = int(os.path.basename(pred_img).split('.')[0])
+
+        # load prediction
+        p = read_image(pred_img, channels_first=False, color=False, resize_dim=(gt_h, gt_w))
+
+        # load gts
+        gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+        gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                            color=False)
+
+        # feed the saver
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+
+    # save mean values
+    metric_saver.save_mean_metrics()
+
+
 if __name__ == '__main__':
+    # exit()
 
     # parse arguments
     parser = argparse.ArgumentParser()
@@ -635,4 +827,18 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_mean_gt(sequences)
+    compute_metrics_for_mathe(sequences)
+
+
+"""
+REFERENCES:
+[1] Wang, Wenguan, Jianbing Shen, and Ling Shao. "Consistent video saliency using local gradient
+flow optimization and global refinement." IEEE Transactions on Image Processing 24.11 (2015): 4185-4196.
+
+[2] Wang, Wenguan, Jianbing Shen, and Fatih Porikli. "Saliency-aware geodesic video object segmentation."
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2015.
+
+[3] Mathe, Stefan, and Cristian Sminchisescu. "Actions in the eye: dynamic gaze datasets and learnt
+saliency models for visual recognition." IEEE transactions on pattern analysis and machine intelligence
+37.7 (2015): 1408-1424.
+"""
