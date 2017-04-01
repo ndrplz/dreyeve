@@ -7,7 +7,6 @@ import cv2
 
 import os
 from os.path import join
-from glob import glob
 
 from tqdm import tqdm
 
