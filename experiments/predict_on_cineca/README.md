@@ -15,6 +15,3 @@ Usage: `python move_dreyeve_gt_to_cineca.py --host <cineca_host> --user <usernam
 * `predict_dreyeve_sequence.py` script that calls prediction on all frames of a sequence.
 
 Usage: `python predict_dreyeve_sequence.py --seq <sequence_number> --pred_dir <prediction_dir>`
-
-* `visualize_predictions` script that visualizes predictions over random samples,
-in an infinite loop.
