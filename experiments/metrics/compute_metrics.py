@@ -139,7 +139,7 @@ class MetricSaver:
         self.cc_values = []
         self.ig_values = []
 
-    def feed(self, frame_number, predictions, groundtruth):
+    def feed(self, frame_number, predictions, groundtruth, ig_baseline):
         """
         Feeds the saver with new predictions and groundtruth data to evaluate.
 
@@ -149,6 +149,7 @@ class MetricSaver:
             If self.model == 'new' a list like [p_dreyeve, p_image, p_flow, p_seg] is expected.
             If self.model == 'mean_gt' a list like [mean_gt_sal, mean_gt_fix] is expected.
         :param groundtruth: a list like [gt_sal, gt_fix]
+        :param ig_baseline: a prediction used as baseline for information gain metric.
         """
 
         gt_sal, gt_fix = groundtruth
@@ -167,7 +168,7 @@ class MetricSaver:
                              ]
 
             this_frame_ig = [frame_number,
-                             ig_numeric(gt_fix, p, gt_sal)]
+                             ig_numeric(gt_fix, p, ig_baseline)]
 
         elif self.model == 'new':
             p_dreyeve, p_image, p_flow, p_seg = predictions
@@ -195,10 +196,10 @@ class MetricSaver:
                              ]
 
             this_frame_ig = [frame_number,
-                             ig_numeric(gt_fix, p_dreyeve, gt_sal),
-                             ig_numeric(gt_fix, p_image, gt_sal),
-                             ig_numeric(gt_fix, p_flow, gt_sal),
-                             ig_numeric(gt_fix, p_seg, gt_sal)]
+                             ig_numeric(gt_fix, p_dreyeve, ig_baseline),
+                             ig_numeric(gt_fix, p_image, ig_baseline),
+                             ig_numeric(gt_fix, p_flow, ig_baseline),
+                             ig_numeric(gt_fix, p_seg, ig_baseline)]
 
         if self.model == 'central_gaussian':
             p = predictions[0]
@@ -214,7 +215,7 @@ class MetricSaver:
                              ]
 
             this_frame_ig = [frame_number,
-                             ig_numeric(gt_fix, p, gt_sal)]
+                             ig_numeric(gt_fix, p, ig_baseline)]
 
         if self.model == 'mean_gt':
             mean_gt_sal, mean_gt_fix = predictions
@@ -230,7 +231,7 @@ class MetricSaver:
                              ]
 
             this_frame_ig = [frame_number,
-                             0]  # doesn't make sense in this case
+                             ig_numeric(gt_fix, mean_gt_fix, ig_baseline)]  # doesn't make sense in this case
 
         if self.model == 'competitor':
             p = predictions[0]
@@ -246,7 +247,7 @@ class MetricSaver:
                              ]
 
             this_frame_ig = [frame_number,
-                             ig_numeric(gt_fix, p, gt_sal)]
+                             ig_numeric(gt_fix, p, ig_baseline)]
 
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
@@ -348,7 +349,7 @@ class AblationStudy:
         self.cc_values = []
         self.ig_values = []
 
-    def feed(self, frame_number, predictions, groundtruth):
+    def feed(self, frame_number, predictions, groundtruth, ig_baseline):
         """
         Feeds the ablation with new predictions and groundtruth data to evaluate.
 
@@ -356,6 +357,7 @@ class AblationStudy:
         :param predictions: a list of numpy array encoding predictions.
             A list like [p_dreyeve, p_image, p_flow, p_seg] is expected.
         :param groundtruth: a list like [gt_sal, gt_fix]
+        :param ig_baseline: a prediction used as baseline for information gain metric.
         """
 
         p_dreyeve, p_image, p_flow, p_seg = predictions
@@ -384,10 +386,10 @@ class AblationStudy:
                          ]
 
         this_frame_ig = [frame_number,
-                         ig_numeric(gt_fix, p_dreyeve, gt_sal),
-                         ig_numeric(gt_fix, p_image + p_flow, gt_sal),
-                         ig_numeric(gt_fix, p_image + p_seg, gt_sal),
-                         ig_numeric(gt_fix, p_flow + p_seg, gt_sal)]
+                         ig_numeric(gt_fix, p_dreyeve, ig_baseline),
+                         ig_numeric(gt_fix, p_image + p_flow, ig_baseline),
+                         ig_numeric(gt_fix, p_image + p_seg, ig_baseline),
+                         ig_numeric(gt_fix, p_flow + p_seg, ig_baseline)]
 
         self.kld_file.write(('{},' * len(this_frame_kld) + '\n').format(*this_frame_kld))
         self.cc_file.write(('{},' * len(this_frame_cc) + '\n').format(*this_frame_cc))
@@ -440,6 +442,9 @@ def compute_metrics_for_new_model(sequences):
     pred_dir = 'Z:\\PREDICTIONS_2017'
     dreyeve_dir = 'Z:\\DATA'
 
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -476,8 +481,10 @@ def compute_metrics_for_new_model(sequences):
                                 color=False)
 
             # feed the saver
-            metric_saver.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix])
-            ablation.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix])
+            metric_saver.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix],
+                              ig_baseline=ig_baseline)
+            ablation.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix],
+                          ig_baseline=ig_baseline)
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -497,6 +504,9 @@ def compute_metrics_for_old_model(sequences):
     pred_dir = 'Z:\\PREDICTIONS\\architecture7'
     dreyeve_dir = 'Z:\\DATA'
 
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -522,7 +532,7 @@ def compute_metrics_for_old_model(sequences):
                                 color=False)
 
             # feed the saver
-            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -541,6 +551,9 @@ def compute_metrics_for_mlnet_model(sequences):
     pred_dir = 'Z:\\PREDICTIONS_MLNET'
     dreyeve_dir = 'Z:\\DATA'
 
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -566,7 +579,7 @@ def compute_metrics_for_mlnet_model(sequences):
                                 color=False)
 
             # feed the saver
-            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -588,6 +601,9 @@ def compute_metrics_for_central_gaussian(sequences):
     central_gaussian = read_image(join(dreyeve_dir, 'gaussian_baseline.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -606,7 +622,7 @@ def compute_metrics_for_central_gaussian(sequences):
                                 color=False)
 
             # feed the saver
-            metric_saver.feed(fr, predictions=[central_gaussian], groundtruth=[gt_sal, gt_fix])
+            metric_saver.feed(fr, predictions=[central_gaussian], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -630,6 +646,9 @@ def compute_metrics_for_mean_gt(sequences):
     mean_gt_fix = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
     for seq in sequences:
         print 'Processing sequence {}'.format(seq)
 
@@ -648,7 +667,8 @@ def compute_metrics_for_mean_gt(sequences):
                                 color=False)
 
             # feed the saver
-            metric_saver.feed(fr, predictions=[mean_gt_sal, mean_gt_fix], groundtruth=[gt_sal, gt_fix])
+            metric_saver.feed(fr, predictions=[mean_gt_sal, mean_gt_fix], groundtruth=[gt_sal, gt_fix],
+                              ig_baseline=ig_baseline)
 
         # save mean values
         metric_saver.save_mean_metrics()
@@ -668,6 +688,9 @@ def compute_metrics_for_wang2015consistent(sequences):
     dreyeve_dir = 'Z:\\DATA'
 
     pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/videosal-master/final_results/**/saliency/*.bmp')
+
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
 
     print 'Computing metrics...'
     last_seq = 0
@@ -702,7 +725,7 @@ def compute_metrics_for_wang2015consistent(sequences):
                             color=False)
 
         # feed the saver
-        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
     metric_saver.save_mean_metrics()
 
 
@@ -720,6 +743,9 @@ def compute_metrics_for_wang2015saliency(sequences):
     dreyeve_dir = 'Z:\\DATA'
 
     pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/SaliencySeg-master/code/final_results/**/final_saliency/*.bmp')
+
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
 
     print 'Computing metrics...'
     last_seq = 0
@@ -754,7 +780,7 @@ def compute_metrics_for_wang2015saliency(sequences):
                             color=False)
 
         # feed the saver
-        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
 
     # save mean values
     metric_saver.save_mean_metrics()
@@ -774,6 +800,9 @@ def compute_metrics_for_mathe(sequences):
     dreyeve_dir = 'Z:\\DATA'
 
     pred_list = glob('Z:/CODE_EXPERIMENTS/EXP_VIDEOSALIENCY_COMPARISON/methods/action_in_the_eye/RESULT/**/*.png')
+
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
 
     print 'Computing metrics...'
     last_seq = 0
@@ -808,7 +837,7 @@ def compute_metrics_for_mathe(sequences):
                             color=False)
 
         # feed the saver
-        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix])
+        metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
 
     # save mean values
     metric_saver.save_mean_metrics()
