@@ -15,8 +15,8 @@ def file_len(fname):
 if __name__ == '__main__':
 
     # do not change these
-    sequences_train = xrange(1, 38 + 1)
-    sequences_test = xrange(39, 74 + 1)
+    sequences_train = xrange(1, 38)
+    sequences_test = xrange(38, 74 + 1)
     predictions_dir = 'Z:/PREDICTIONS_wang2015saliency'
 
     # change these
