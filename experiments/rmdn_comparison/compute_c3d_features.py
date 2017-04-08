@@ -57,7 +57,7 @@ if __name__ == '__main__':
     assert args.seq is not None, 'Please provide a correct dreyeve sequence'
 
     # some parameters
-    c, f, h, w = (3, 16, 112, 112)
+    c, f, h, w = (3, 16, 128, 171)
 
     dreyeve_dir = 'Z:/DATA'  # local
     # dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/DREYEVE/data/'  # cineca
