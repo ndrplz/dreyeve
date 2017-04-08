@@ -43,6 +43,7 @@ for cur_run =  num_of_runs : -1 : 1
     config('var_t')            = (config('time_integration') - 1) / 2 * frame;  % temporal diffusion decay in saliency maps
     config('highest_y')        = round(lowest_y_allowed(cur_run, 2));
     
-    create_new_ground_truth(cur_run, config);
+    %create_new_ground_truth(cur_run, config);
+    script_for_fixation_images(cur_run, config);
     
 end
