@@ -9,8 +9,7 @@ from os.path import join
 
 from model import ml_net_model
 from utils import preprocess_images, postprocess_predictions
-from computer_vision_utils.io_helper import read_image, normalize
-from computer_vision_utils.tensor_manipulation import resize_tensor
+from computer_vision_utils.io_helper import normalize
 from computer_vision_utils.stitching import stitch_together
 
 from config import shape_r, shape_c
