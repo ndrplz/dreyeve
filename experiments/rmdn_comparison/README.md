@@ -9,3 +9,9 @@ the RMDN model.
 dreyeve sequence.
 
 Usage: `python compute_c3d_features.py --seq <seq>`
+
+* `retrieve_c3d_encodings_from_cineca.py` is a script that retrieves all c3d
+precomputed encodings from cineca server with sftp.
+
+Usage: `python retrieve_c3d_encodings_from_cineca.py --host <host> --user <user> --password <password>`
+
