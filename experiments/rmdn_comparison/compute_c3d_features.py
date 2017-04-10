@@ -15,6 +15,8 @@ from rmdn_comparison.models import C3DEncoder
 
 from computer_vision_utils.io_helper import read_image
 
+from config import DREYEVE_ROOT
+
 
 def load_sample_for_encoding(frames_dir, sample_number, temporal_window, img_size):
     """
@@ -59,8 +61,7 @@ if __name__ == '__main__':
     # some parameters
     c, f, h, w = (3, 16, 128, 171)
 
-    dreyeve_dir = 'Z:/DATA'  # local
-    # dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/DREYEVE/data/'  # cineca
+    dreyeve_dir = DREYEVE_ROOT  # local
 
     # get the model
     model = C3DEncoder(input_shape=(c, f, h, w))
