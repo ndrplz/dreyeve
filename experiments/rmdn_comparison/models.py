@@ -153,6 +153,6 @@ def RMDN(hidden_states, n_mixtures, input_shape, mode, summary=True):
 # helper entry point to test models
 if __name__ == '__main__':
 
-    # model = C3DEncoder(input_shape=(3, 16, 112, 112))
-    model = RMDN_train(hidden_states=128, n_mixtures=20, input_shape=(30, 50176))
-    model.compile(optimizer='adam', loss=MDN_neg_log_likelyhood)
+    model = C3DEncoder(input_shape=(3, 16, 128, 171))
+    # model = RMDN_train(hidden_states=128, n_mixtures=20, input_shape=(30, 50176))
+    # model.compile(optimizer='adam', loss=MDN_neg_log_likelyhood)
