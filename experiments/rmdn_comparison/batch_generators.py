@@ -16,7 +16,7 @@ def RMDN_batch(batchsize, mode):
 
     :param batchsize: batchsize.
     :param mode: choose among [`train`, `val`, `test`].
-    :return: a batch like X, Y
+    :return: a batch like sequence numbers, frame ids, X, Y
     """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
 
@@ -30,6 +30,8 @@ def RMDN_batch(batchsize, mode):
         sequences = dreyeve_test_seq
         allowed_frames = test_frame_range
 
+    seqs = np.zeros(shape=(batchsize, T), dtype=np.uint32)
+    frs = np.zeros(shape=(batchsize, T), dtype=np.uint32)
     X = np.zeros(shape=(batchsize, T, encoding_dim), dtype=np.float32)
     Y = np.zeros(shape=(batchsize, T, h, w))
     for b in xrange(0, batchsize):
@@ -45,10 +47,12 @@ def RMDN_batch(batchsize, mode):
             gt = read_image(join(seq_gt_dir, '{:06d}.png'.format(fr+offset+1)), channels_first=False, color=False,
                             resize_dim=(h, w))
 
+            seqs[b, offset] = seq
+            frs[b, offset] = fr+offset
             X[b, offset] = c3d_encoding
             Y[b, offset] = gt
 
-    return X, Y
+    return seqs, frs, X, Y
 
 
 def generate_RMDN_batch(batchsize, mode):
@@ -60,12 +64,13 @@ def generate_RMDN_batch(batchsize, mode):
     :return: a batch like X, Y
     """
     while True:
-        yield RMDN_batch(batchsize, mode)
+        _, _, X, Y = RMDN_batch(batchsize, mode)
+        yield X, Y
 
 
 # helper function to test batch loading.
 if __name__ == '__main__':
-    X, Y = RMDN_batch(batchsize=8, mode='train')
+    _, _, X, Y = RMDN_batch(batchsize=8, mode='train')
 
     print X.shape
     print Y.shape

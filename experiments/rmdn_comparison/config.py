@@ -11,6 +11,9 @@ batchsize = 2
 lr = 0.0003
 hidden_states = 128
 
+nb_epoch = 999
+samples_per_epoch = 1024 * batchsize
+
 dreyeve_train_seq = range(1, 37+1)
 dreyeve_test_seq = range(38, 74+1)
 train_frame_range = range(15, 3500 - T) + range(4000, total_frames_each_run - T)

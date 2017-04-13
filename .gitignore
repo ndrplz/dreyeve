@@ -125,3 +125,5 @@ experiments/metrics/plots_by_aggregating_stuff.m
 matlab/create_ground_truth/script_for_fixation_images.m
 experiments/visualization/competitive_figures
 experiments/rmdn_comparison/cineca_pids.txt
+experiments/rmdn_comparison/predictions
+experiments/rmdn_comparison/rmdn_checkpoints
