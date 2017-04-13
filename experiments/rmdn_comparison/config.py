@@ -7,7 +7,9 @@ encoding_dim = 81920
 h, w = 128, 171
 T = 50
 C = 20
-batchsize = 32
+batchsize = 2
+lr = 0.0003
+hidden_states = 128
 
 dreyeve_train_seq = range(1, 37+1)
 dreyeve_test_seq = range(38, 74+1)

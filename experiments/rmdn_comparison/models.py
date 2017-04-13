@@ -3,11 +3,10 @@ This file holds models for comparison with RMDN.
 """
 
 from keras.models import Model
-from keras.layers import Input, Convolution3D, MaxPooling3D, Flatten
-from keras.layers import LSTM, Dense, TimeDistributedDense, Reshape, merge, Activation
+from keras.layers import Input, Convolution3D, MaxPooling3D, Flatten, Dropout
+from keras.layers import LSTM, Dense, TimeDistributedDense, Reshape, merge, Activation, Lambda
 from keras.utils.data_utils import get_file
-
-from objectives import MDN_neg_log_likelyhood
+import keras.backend as K
 
 
 C3D_WEIGHTS_URL = 'http://imagelab.ing.unimore.it/files/c3d_weights/c3d-sports1M_weights.h5'
@@ -64,32 +63,48 @@ def C3DEncoder(input_shape, pretrained=True, summary=True):
 
 
 def RMDN_train(hidden_states, n_mixtures, input_shape, summary=True):
+    """
+    Function that returns RMDN model for training. Here the recurrent layer has
+    return_sequences=True and is stateless.
 
+    :param hidden_states: dimension of the LSTM state.
+    :param n_mixtures: number of output mixture densities.
+    :param input_shape: the input shape like (time_steps, c3d_encoding).
+    :param summary: optional, whether or not to print summary.
+    :return: a Keras model.
+    """
     time_steps, _ = input_shape
 
     sequence_in = Input(shape=input_shape, name='input')
 
-    state = LSTM(output_dim=hidden_states, return_sequences=True, name='recurrent_module')(sequence_in)
+    state = LSTM(output_dim=hidden_states,
+                 return_sequences=True,
+                 name='recurrent_module')(sequence_in)
+    state = Dropout(0.5)(state)
 
     # Mixture Density Inference
+    # mixture components weights
     weight = TimeDistributedDense(output_dim=n_mixtures * 1, name='output_weight')(state)
+    weight = Reshape(target_shape=(time_steps, n_mixtures))(weight)
+    weight = Activation('softmax')(weight)
     weight = Reshape(target_shape=(time_steps, n_mixtures, 1))(weight)
-    weight = Activation('linear')(weight)
 
-    mean = TimeDistributedDense(output_dim=n_mixtures * 2, name='output_mean')(state)
-    mean = Reshape(target_shape=(time_steps * n_mixtures, 2))(mean)
-    mean = Activation('softmax')(mean)
-    mean = Reshape(target_shape=(time_steps, n_mixtures, 2))(mean)
+    # gaussian mean
+    mu = TimeDistributedDense(output_dim=n_mixtures * 2, name='output_mean')(state)
+    mu = Reshape(target_shape=(time_steps, n_mixtures, 2))(mu)
+    mu = Activation('relu')(mu)  # this must become linear
 
-    var = TimeDistributedDense(output_dim=n_mixtures * 2, name='output_var')(state)
-    var = Reshape(target_shape=(time_steps, n_mixtures, 2))(var)
-    var = Activation('relu')(var)  # TODO this activation must become exp
+    # variance
+    sigma = TimeDistributedDense(output_dim=n_mixtures * 2, name='output_var')(state)
+    sigma = Reshape(target_shape=(time_steps, n_mixtures, 2))(sigma)
+    sigma = Lambda(lambda x: K.exp(x) + 1, output_shape=(time_steps, n_mixtures, 2))(sigma)
 
-    corr = TimeDistributedDense(output_dim=n_mixtures * 2, name='output_corr')(state)
-    corr = Reshape(target_shape=(time_steps, n_mixtures, 2))(corr)
-    corr = Activation('tanh')(corr)
+    # correlation
+    ro = TimeDistributedDense(output_dim=n_mixtures, name='output_corr')(state)
+    ro = Reshape(target_shape=(time_steps, n_mixtures, 1))(ro)
+    ro = Activation('tanh')(ro)
 
-    md = merge([mean, weight, var, corr], mode='concat', concat_axis=-1)
+    md = merge([weight, mu, sigma, ro], mode='concat', concat_axis=-1)
 
     model = Model(input=sequence_in, output=md)
 
@@ -100,7 +115,16 @@ def RMDN_train(hidden_states, n_mixtures, input_shape, summary=True):
 
 
 def RMDN_test(hidden_states, n_mixtures, input_shape, summary=True):
+    """
+    Function that returns RMDN model for testing. Here the recurrent layer has
+    return_sequences=False and is stateful.
 
+    :param hidden_states: dimension of the LSTM state.
+    :param n_mixtures: number of output mixture densities.
+    :param input_shape: the input shape like (1, c3d_encoding).
+    :param summary: optional, whether or not to print summary.
+    :return: a Keras model.
+    """
     time_steps, _ = input_shape
     assert time_steps == 1, 'Input shape error, time step should be == 1 in test mode.'
 
@@ -112,23 +136,27 @@ def RMDN_test(hidden_states, n_mixtures, input_shape, summary=True):
                  name='recurrent_module')(sequence_in)
 
     # Mixture Density Inference
+    # mixture components weights
     weight = Dense(output_dim=n_mixtures * 1, name='output_weight')(state)
-    weight = Reshape(target_shape=(n_mixtures, 1))(weight)
-    weight = Activation('linear')(weight)
+    weight = Activation('softmax')(weight)
+    weight = Reshape(target_shape=(time_steps, n_mixtures, 1))(weight)
 
-    mean = Dense(output_dim=n_mixtures * 2, name='output_mean')(state)
-    mean = Reshape(target_shape=(n_mixtures, 2))(mean)
-    mean = Activation('softmax')(mean)
+    # gaussian mean
+    mu = Dense(output_dim=n_mixtures * 2, name='output_mean')(state)
+    mu = Reshape(target_shape=(time_steps, n_mixtures, 2))(mu)
+    mu = Activation('relu')(mu)  # this must become linear
 
-    var = Dense(output_dim=n_mixtures * 2, name='output_var')(state)
-    var = Reshape(target_shape=(n_mixtures, 2))(var)
-    var = Activation('relu')(var)  # TODO this activation must become exp
+    # variance
+    sigma = Dense(output_dim=n_mixtures * 2, name='output_var')(state)
+    sigma = Reshape(target_shape=(time_steps, n_mixtures, 2))(sigma)
+    sigma = Lambda(lambda x: K.exp(x) + 1, output_shape=(time_steps, n_mixtures, 2))(sigma)
 
-    corr = Dense(output_dim=n_mixtures * 2, name='output_corr')(state)
-    corr = Reshape(target_shape=(n_mixtures, 2))(corr)
-    corr = Activation('tanh')(corr)
+    # correlation
+    ro = Dense(output_dim=n_mixtures, name='output_corr')(state)
+    ro = Reshape(target_shape=(time_steps, n_mixtures, 1))(ro)
+    ro = Activation('tanh')(ro)
 
-    md = merge([mean, weight, var, corr], mode='concat', concat_axis=-1)
+    md = merge([weight, mu, sigma, ro], mode='concat', concat_axis=-1)
 
     model = Model(input=sequence_in, output=md)
 
@@ -138,21 +166,12 @@ def RMDN_test(hidden_states, n_mixtures, input_shape, summary=True):
     return model
 
 
-def RMDN(hidden_states, n_mixtures, input_shape, mode, summary=True):
-
-    assert mode in ['train', 'test'], 'Unknown mode {}'.format(mode)
-
-    if mode == 'train':
-        model = RMDN_train(hidden_states, n_mixtures, input_shape, summary)
-    else:
-        model = RMDN_test(hidden_states, n_mixtures, input_shape, summary)
-
-    return model
-
-
 # helper entry point to test models
 if __name__ == '__main__':
+    from config import *
 
-    model = C3DEncoder(input_shape=(3, 16, 128, 171))
-    # model = RMDN_train(hidden_states=128, n_mixtures=20, input_shape=(30, 50176))
-    # model.compile(optimizer='adam', loss=MDN_neg_log_likelyhood)
+    # model = C3DEncoder(input_shape=(3, 16, 128, 171))
+    model = RMDN_train(hidden_states=128, n_mixtures=C, input_shape=(T, encoding_dim))
+    model.save_weights('prova.h5')
+    model = RMDN_test(hidden_states=128, n_mixtures=C, input_shape=(1, encoding_dim))
+    model.load_weights('prova.h5')

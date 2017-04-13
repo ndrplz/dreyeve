@@ -11,6 +11,13 @@ from config import T, h, w, encoding_dim
 
 
 def RMDN_batch(batchsize, mode):
+    """
+    Function to provide a batch for RMDN training.
+
+    :param batchsize: batchsize.
+    :param mode: choose among [`train`, `val`, `test`].
+    :return: a batch like X, Y
+    """
     assert mode in ['train', 'val', 'test'], 'Unknown mode {} for dreyeve batch loader'.format(mode)
 
     if mode == 'train':
@@ -43,5 +50,22 @@ def RMDN_batch(batchsize, mode):
 
     return X, Y
 
+
+def generate_RMDN_batch(batchsize, mode):
+    """
+    Function that yields batches for RMDN training continuously.
+
+    :param batchsize: batchsize.
+    :param mode: choose among [`train`, `val`, `test`].
+    :return: a batch like X, Y
+    """
+    while True:
+        yield RMDN_batch(batchsize, mode)
+
+
+# helper function to test batch loading.
 if __name__ == '__main__':
     X, Y = RMDN_batch(batchsize=8, mode='train')
+
+    print X.shape
+    print Y.shape
