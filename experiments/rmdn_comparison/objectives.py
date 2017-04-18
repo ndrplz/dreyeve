@@ -75,7 +75,6 @@ def MDN_neg_log_likelyhood(image_size, B, T, C):
         # multiply with fixation probability
         y_true /= (K.epsilon() + K.sum(y_true, axis=[2, 3], keepdims=True))
         y_true = K.reshape(y_true, shape=(B, T, 1, 1, h*w))
-        y_true = K.ones_like(y_true)
 
         return K.sum((y_true*neg_lkl), axis=[1, 2, 3, 4])
 
