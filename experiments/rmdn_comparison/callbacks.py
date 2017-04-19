@@ -13,7 +13,8 @@ from computer_vision_utils.stitching import stitch_together
 from computer_vision_utils.io_helper import read_image, write_image, normalize
 
 from keras_dl_modules.custom_keras_extensions.callbacks import Checkpointer
-import scipy.stats
+
+from utils import gmm_to_probability_map
 
 
 class ModelLoader(Callback):
@@ -85,7 +86,7 @@ class PredictionCallback(Callback):
                 # extract this frame mixture
                 gmm = Z[b, t]
 
-                pred_map = self.__gmm_to_probability_map(gmm=gmm, image_size=(h, w))
+                pred_map = gmm_to_probability_map(gmm=gmm, image_size=(h, w))
                 pred_map = normalize(pred_map)
                 pred_map = np.tile(np.expand_dims(pred_map, axis=-1), reps=(1, 1, 3))
 
@@ -93,25 +94,6 @@ class PredictionCallback(Callback):
                 stitch = stitch_together([rgb_frame, pred_map, fixation_map], layout=(1, 3))
                 write_image(join(epoch_out_dir, '{:02d}_{:02d}.jpg'.format(b, t)), stitch)
 
-    def __gmm_to_probability_map(self, gmm, image_size):
-
-        h, w = image_size
-
-        x, y = np.mgrid[0:h:1, 0:w:1]
-        pos = np.empty(x.shape + (2,))
-        pos[:, :, 0] = x
-        pos[:, :, 1] = y
-
-        out = np.zeros(shape=(h, w))
-
-        for g in range(0, gmm.shape[0]):
-            w = gmm[g, 0]
-            normal = scipy.stats.multivariate_normal(mean=gmm[g, 1:3], cov=[[gmm[g, 3], gmm[g, 5]], [gmm[g, 5], gmm[g, 4]]])
-            out += w * normal.pdf(pos)
-
-        out /= out.sum()
-
-        return out
 
 
 def get_callbacks(experiment_id):
