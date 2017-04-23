@@ -15,9 +15,8 @@ from os.path import join
 
 from models import RMDN_test
 from computer_vision_utils.io_helper import normalize
-from computer_vision_utils.stitching import stitch_together
 
-from config import hidden_states, C, encoding_dim, h, w
+from config import hidden_states, C, encoding_dim, h, w, DREYEVE_ROOT
 from utils import gmm_to_probability_map
 
 
@@ -62,18 +61,15 @@ if __name__ == '__main__':
     assert args.seq is not None, 'Please provide a correct dreyeve sequence'
     assert args.pred_dir is not None, 'Please provide a correct pred_dir'
 
-    dreyeve_dir = 'Z:/DATA'  # local
-    # dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/DREYEVE/data/'  # cineca
-
     # get the model
     model = RMDN_test(hidden_states=hidden_states, n_mixtures=C, input_shape=(1, encoding_dim))
-    model.load_weights('dummy_weights.h5')
+    model.load_weights('bazzani.h5')
 
     # set up some directories
     pred_dir = join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'output')
     makedirs([pred_dir])
 
-    sequence_dir = join(dreyeve_dir, '{:02d}'.format(int(args.seq)))
+    sequence_dir = join(DREYEVE_ROOT, '{:02d}'.format(int(args.seq)))
     for sample in tqdm(range(15, 7500)):
         X = load_dreyeve_sample(sequence_dir=sequence_dir, sample=sample)
 
