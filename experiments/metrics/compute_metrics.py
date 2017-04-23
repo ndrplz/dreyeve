@@ -585,6 +585,53 @@ def compute_metrics_for_mlnet_model(sequences):
         metric_saver.save_mean_metrics()
 
 
+def compute_metrics_for_rmdn_model(sequences):
+    """
+    Function to compute metrics out of the RMDN model [4].
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = 'Z:\\PREDICTIONS_RMDN'
+    dreyeve_dir = 'Z:\\DATA'
+
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
+    for seq in sequences:
+        print 'Processing sequence {}'.format(seq)
+
+        # prediction dirs
+        seq_pred_dir = join(pred_dir, '{:02d}'.format(seq), 'output')
+
+        # gt dirs
+        seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+        seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        print 'Computing metrics...'
+        metric_saver = MetricSaver(pred_dir, seq, model='old')
+
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
+            # load predictions
+            p = read_image(join(seq_pred_dir, '{:06}.png'.format(fr+1)), channels_first=False, color=False,
+                           resize_dim=(gt_h, gt_w))
+
+            # load gts
+            gt_sal = read_image(join(seq_gt_sal_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+            gt_fix = read_image(join(seq_gt_fix_dir, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+
+            # feed the saver
+            metric_saver.feed(fr, predictions=[p], groundtruth=[gt_sal, gt_fix], ig_baseline=ig_baseline)
+
+        # save mean values
+        metric_saver.save_mean_metrics()
+
+
 def compute_metrics_for_central_gaussian(sequences):
     """
     Function to compute metrics using a central gaussian as prediction.
@@ -856,7 +903,7 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_mathe(sequences)
+    compute_metrics_for_rmdn_model(sequences)
 
 
 """
@@ -870,4 +917,8 @@ Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition. 2
 [3] Mathe, Stefan, and Cristian Sminchisescu. "Actions in the eye: dynamic gaze datasets and learnt
 saliency models for visual recognition." IEEE transactions on pattern analysis and machine intelligence
 37.7 (2015): 1408-1424.
+
+[4] Bazzani, Loris and Larochelle, Hugo and Torresani, Lorenzo. "Recurrent Mixture Density
+Network for Spatiotemporal Visual Attention" International Conference on Learning Representations (ICLR 2017)
+
 """
