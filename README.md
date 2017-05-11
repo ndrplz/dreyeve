@@ -10,9 +10,10 @@ This repository was used throughout the whole work presented in the [paper](http
 
 * `dreyeve-tobii`: cpp code to acquire gaze over dreyeve sequences with Tobii EyeX.
 * `semseg`: python project to calculate semantic segmentation over all frames of a dreyeve sequence
-* **`experiments`: python project that holds stuff for experimental section**
+* [**`experiments`**](experiments)**: python project that holds stuff for experimental section**
 * `matlab`: some matlab code to compute optical flow, blends or to create the new fixation groundtruth.
 
+The [**`experiments`**](experiments) section is the one that probably interest the reader, in that is the one that contains the code used for developing and training both our model and baselines and competitors. More detailed documentation is available [**`there`**](experiments).
 
 ---
 
