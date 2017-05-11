@@ -4,10 +4,13 @@
 <a href="" target="_blank"><img src="img/overview.jpg" height="300px"/></a>
 </p>
 
+## How-To
+
+This repository was used throughout the whole work presented in the [paper](https://arxiv.org/pdf/1705.03854.pdf) so it contains quite a large amount of code. Nonetheless, it should be quite easy to navigate into. In particular:
 
 * `dreyeve-tobii`: cpp code to acquire gaze over dreyeve sequences with Tobii EyeX.
 * `semseg`: python project to calculate semantic segmentation over all frames of a dreyeve sequence
-* `experiments`: python project that holds stuff for experimental section
+* **`experiments`: python project that holds stuff for experimental section**
 * `matlab`: some matlab code to compute optical flow, blends or to create the new fixation groundtruth.
 
 
