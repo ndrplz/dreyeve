@@ -1,7 +1,7 @@
 # DR(eye)VE Project: code repository
 
 <p align="center">
-<a href="" target="_blank"><img src="img/overview.jpg" height="300px"/></a>
+<a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="img/overview.jpg" height="300px"/></a>
 </p>
 
 ## How-To
