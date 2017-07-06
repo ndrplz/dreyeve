@@ -9,3 +9,4 @@ This folder holds python code used for the experimental section.
 * [`rmdn_comparison`](rmdn_comparison) holds code to extract C3D features, train and predict using
 the [Recurrend Mixture Density Network](https://openreview.net/pdf?id=SJRpRfKxx) from Bazzani et al.
 
+**All keras code has been developed and tested with Keras 1 and using Theano as backend.**
