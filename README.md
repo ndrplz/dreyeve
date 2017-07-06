@@ -15,6 +15,8 @@ This repository was used throughout the whole work presented in the [paper](http
 
 The [**`experiments`**](experiments) section is the one that probably interest the reader, in that is the one that contains the code used for developing and training both our model and baselines and competitors. More detailed documentation is available [**`there`**](experiments).
 
+**All keras code has been developed and tested with Keras 1 and using Theano as backend.**
+
 ---
 
 ### The code accompanies the following paper: 
