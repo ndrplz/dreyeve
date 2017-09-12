@@ -15,6 +15,7 @@ def blend_map(img, map, factor, colormap=cv2.COLORMAP_JET):
 
     assert 0 < factor < 1, 'factor must satisfy 0 < factor < 1'
 
+    map = np.float32(map)
     map /= map.max()
     map *= 255
     map = map.astype(np.uint8)
