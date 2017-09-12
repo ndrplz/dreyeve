@@ -17,7 +17,7 @@ from train.utils import read_lines_from_file
 
 from utils import blend_map
 
-dreyeve_root = 'Z:'
+dreyeve_root = '/majinbu/public/DREYEVE'
 dreyeve_test_seq = range(38, 74+1)
 
 
@@ -49,7 +49,7 @@ def extract_most_competitive_frames(sequences, prediction_dir, competitors_dirs)
 
         comp_kld = np.concatenate(comp_kld, axis=0)
 
-        my_kld = my_kld[:, [0, 5]]
+        my_kld = my_kld[:, [0, 2]]
         comp_kld = comp_kld[:, :, [0, 2]]
 
         # index of frames where we perform better than all competitors (by means of kld)
@@ -94,28 +94,28 @@ def save_competitive_figures(out_dir, competitive_list, prediction_dir, competit
                            color_mode='BGR',
                            dtype=np.uint8,
                            resize_dim=resize_dim)
-        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_000.png'.format(seq, frame)), im)
+        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_000.jpg'.format(seq, frame)), im)
 
         # read gt and blend
-        gt = read_image(join(dreyeve_root, 'DATA', '{:02d}'.format(seq), 'saliency_fix', '{:06d}.png'.format(frame+1)),
+        gt = read_image(join(dreyeve_root, 'DATA', '{:02d}'.format(seq), 'saliency', '{:06d}.png'.format(frame+1)),
                         channels_first=False,
                         color=False,
                         dtype=np.float32,
                         resize_dim=resize_dim)
 
         gt = blend_map(im, gt, factor=0.5)
-        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_001.png'.format(seq, frame)), gt)
+        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_001.jpg'.format(seq, frame)), gt)
 
         # read pred and blend
-        my_pred = np.squeeze(np.load(join(dreyeve_root, prediction_dir, '{:02d}'.format(seq),
-                               'dreyeveNet', '{:06d}.npz'.format(frame)))['arr_0'])
+        my_pred = np.squeeze(cv2.imread(join(dreyeve_root, prediction_dir, '{:02d}'.format(seq),
+                               'output', '{:06d}.png'.format(frame)), 0))
         my_pred = cv2.resize(my_pred, dsize=resize_dim[::-1])
         my_pred = blend_map(im, my_pred, factor=0.5)
-        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_002.png'.format(seq, frame)), my_pred)
+        cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_002.jpg'.format(seq, frame)), my_pred)
 
         to_stitch = [im, gt, my_pred]
 
-        for c, competitor in enumerate(competitors_dirs):
+        for c, competitor in enumerate(competitors_dirs[:-1]):
             # read competitor result
             comp_pred = read_image(join(dreyeve_root, competitor, '{:02d}'.format(seq),
                                         'output', '{:06d}.png'.format(frame)),
@@ -125,22 +125,23 @@ def save_competitive_figures(out_dir, competitive_list, prediction_dir, competit
                                    resize_dim=resize_dim)
             comp_pred = blend_map(im, comp_pred, factor=0.5)
             to_stitch.append(comp_pred)
-            cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_{:03d}.png'.format(seq, frame, c+3)), comp_pred)
+            cv2.imwrite(join(this_sample_dir, 'R{:02d}_frame_{:06d}_{:03d}.jpg'.format(seq, frame, c+3)), comp_pred)
 
         stitch = stitch_together(to_stitch, layout=(1, len(to_stitch)))
-        cv2.imwrite(join(stitches_dir, '{:06d}.png'.format(i)), stitch)
+        cv2.imwrite(join(stitches_dir, '{:06d}.jpg'.format(i)), stitch)
 
 
 # entry point
 if __name__ == '__main__':
 
-    prediction_dir = 'PREDICTIONS_2017'
+    prediction_dir = 'PREDICTIONS/architecture7'
     competitors_dir = [
-        'PREDICTIONS/architecture7',
+        # 'PREDICTIONS/architecture7',
         # 'PREDICTIONS_CENTRAL_GAUSSIAN',
         # 'PREDICTIONS_mathe',
-        # 'PREDICTIONS_MEAN_TRAIN_GT',
         'PREDICTIONS_MLNET',
+        'PREDICTIONS_RMDN',
+        'PREDICTIONS_MEAN_TRAIN_GT',
         # 'PREDICTIONS_wang2015consistent',
         # 'PREDICTIONS_wang2015saliency'
     ]
