@@ -82,7 +82,7 @@ def ask_question_2():
     question = 'Do you think you observed the attentional behavior of a human or a AI?'
     answers = {0: 'Human', 1: 'AI'}
 
-    return ask_question(question=question, answers=answers)
+    return answers[ask_question(question=question, answers=answers)]
 
 
 # simple test case
