@@ -32,6 +32,29 @@ sigma_blur = 50
 rbf_sigma = 5
 
 
+def get_driver_for_sequence(seq):
+    """
+    This function returns the driver id of a given sequence.
+    
+    Parameters
+    ----------
+    seq: int
+        the sequence number
+    Returns
+    -------
+    str
+        the driver id
+    """
+
+    with open(join(dreyeve_root, 'dr(eye)ve_design.txt')) as f:
+        dreyeve_design = np.array([f.rstrip().split('\t') for f in f.readlines()])
+
+    row = np.where(dreyeve_design[:, 0] == '{:02d}'.format(seq))[0][0]
+    driver_id = dreyeve_design[row, 4]
+
+    return driver_id
+
+
 def read_frame(seq, idx):
     """
     Reads a Dreyeve frame given a sequence and the frame number
@@ -135,16 +158,18 @@ def get_alpha_from_attention_map(attention_map, sigma):
     return alpha
 
 
-def write_video_specification(output_txt, video_name, which_map, seq, start, end):
+def write_video_specification(filename, video_name, driver_id, which_map, seq, start, end):
     """
     Writes video information into the txt file (in append mode).
     
     Parameters
     ----------
-    output_txt: str
+    filename: str
         the output file to write to.
     video_name: str
         the name of the video file.
+    driver_id: str
+        the id of the driver.
     which_map: str
         which map has been selected.
     seq: int
@@ -155,8 +180,8 @@ def write_video_specification(output_txt, video_name, which_map, seq, start, end
         the stop frame of the dreyeve sequence.
     """
 
-    with open(output_txt, 'a') as f:
-        line = [video_name, which_map, seq, start, end]
+    with open(filename, 'a') as f:
+        line = [video_name, driver_id, which_map, seq, start, end]
         f.write(('{}\t'*len(line)).format(*line).rstrip())
         f.write('\n')
 
@@ -170,6 +195,9 @@ def main():
 
     # sample a sequence
     seq = np.random.randint(38, 74 + 1)
+
+    # get driver for sequence
+    driver_id = get_driver_for_sequence(seq)
 
     # sample a start point
     start = np.random.randint(15, 7498 - n_frames)
@@ -211,7 +239,7 @@ def main():
     writer.close()
 
     # write video parameters on txt file
-    write_video_specification(output_txt, video_name, which_map, seq, start, start + n_frames)
+    write_video_specification(output_txt, video_name, driver_id, which_map, seq, start, start + n_frames)
 
 
 # entry point
