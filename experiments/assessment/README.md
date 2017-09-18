@@ -8,6 +8,9 @@ is a script to pre-evaluate videos for the quelity assessment.
 Also saves the parameters of each video in a single txt file.
 * [`questions.py`](`compute_metrics.py`)
 contains code to ask questions to the user.
+* [`show_attentional_video.py`](`show_attentional_video.py`)
+is the script to call when a new subject partecipates. 
+Shows a video and asks questions.
 
 
 ### TODOS:
@@ -17,4 +20,3 @@ Redo until perfection.
 * make sure that areas are the same across different map
 types.
 * check for any other request of reviewer 1.
-* create script to display video and collect answers.
