@@ -3,6 +3,8 @@ This folder holds python code used for the experimental section.
 
 * [`assessment`](assessment) holds code to run the qualitative
 assessment experiment (sec 5.4 of the paper)
+* [`dataset_stats`](dataset_stats) holds code to measure some 
+data-related statistics.
 * [`metrics`](metrics) holds code to compute metrics from precomputed predictions.
 * [`mlnet_comparison`](mlnet_comparison) holds code to train and predict a sequence from [Multi Level Network](https://github.com/marcellacornia/mlnet) from Cornia et al.
 * [`predict_on_cineca`](predict_on_cineca) holds code to predict sequences with the dreyevenet model.
