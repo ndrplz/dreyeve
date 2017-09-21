@@ -127,3 +127,4 @@ experiments/visualization/competitive_figures*
 experiments/rmdn_comparison/cineca_pids.txt
 experiments/rmdn_comparison/predictions
 experiments/rmdn_comparison/rmdn_checkpoints
+experiments/dataset_stats/variances.txt
