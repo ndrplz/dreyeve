@@ -17,7 +17,8 @@ from questions import ask_question_1, ask_question_2
 
 # parameters
 output_file = 'assessment_answers.txt'
-videos_each_subject = 3
+videos_each_subject = 5
+videos_to_skip = 0
 
 
 def get_subject_id():
@@ -60,7 +61,8 @@ def get_random_video():
     return video_params
 
 
-def log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior, seq, start, end):
+def log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
+                seq, start, end, is_acting, color_slope, spatial_slope):
     """
     Logs the answers of a subject to the text file.
     
@@ -85,7 +87,8 @@ def log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, at
     """
 
     with open(output_file, 'a') as f:
-        line = [subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior, seq, start, end]
+        line = [subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
+                seq, start, end, is_acting, color_slope, spatial_slope]
         f.write(('{}\t'*len(line)).format(*line).rstrip())
         f.write('\n')
 
@@ -96,16 +99,16 @@ def main():
     # get an id for the new subject
     subject_id = get_subject_id()
 
-    for _ in range(0, videos_each_subject):
+    for i in range(0, videos_each_subject):
         # get a random video
-        video_filename, attentional_behavior, seq, start, end = get_random_video()
+        video_filename, driver, attentional_behavior, seq, start, end, is_acting, color_slope, spatial_slope = get_random_video()
 
         # display video
         video_path = join(video_root, video_filename)
         frames = skvideo.io.FFmpegReader(video_path).nextFrame()  # generator
 
         for frame in frames:
-            cv2.imshow('video', frame)  # TODO pls remove this library I hate it.
+            cv2.imshow('video', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # TODO pls remove this library I hate it.
             cv2.waitKey(1000 // 25)
 
         # ask questions
@@ -113,7 +116,10 @@ def main():
         turing_guess = ask_question_2()
 
         # write line on file
-        log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior, seq, start, end)
+        if i >= videos_to_skip:
+            log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
+                        seq, start, end, is_acting, color_slope, spatial_slope
+                        )
 
 
 # entry point
