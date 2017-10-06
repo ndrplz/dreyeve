@@ -7,6 +7,7 @@ import numpy as np
 from os.path import join, exists
 import os
 
+import cv2
 import skimage.io as io
 from skimage.transform import resize
 
@@ -16,6 +17,8 @@ import skvideo.io
 from CtypesPermutohedralLattice import PermutohedralLattice
 
 from scipy.ndimage.morphology import distance_transform_edt
+
+from visualization.utils import blend_map
 
 import matplotlib.pyplot as plt
 plt.ion()
@@ -75,9 +78,9 @@ def read_frame(seq, idx):
     seq_dir = join(dreyeve_root, 'DATA', '{:02d}'.format(seq), 'frames')
 
     img = io.imread(join(seq_dir, '{:06d}.jpg'.format(idx)))
-    img = resize(img, output_shape=(1080 // 2, 1920 // 2), mode='constant')
+    img = resize(img, output_shape=(1080 // 2, 1920 // 2), mode='constant', preserve_range=True)
 
-    return img
+    return np.uint8(img)
 
 
 def read_attention_map(seq, idx, which_map):
@@ -115,7 +118,9 @@ def read_attention_map(seq, idx, which_map):
     # attention_map /= np.max(attention_map)  # last activation is relu!
     # attention_map *= 255
     # attention_map = np.uint8(attention_map)
-    # attention_map = np.squeeze(attention_map)
+    attention_map = np.squeeze(attention_map)
+    attention_map = np.float32(attention_map)
+    attention_map /= np.sum(attention_map)
 
     attention_map = resize(attention_map, output_shape=shape, mode='constant')
 
@@ -170,19 +175,8 @@ def blur_with_magic_permutho(img, attention_map, color_slope, spatial_slope):
     return blurred, features
 
 
-# def blend_attention_map(img, attention_map):
-#     """
-#     The good old blend with the jet colormap.
-#     """
-#
-#     attention_map /= np.sum(attention_map)
-#
-#
-#     return blurred,
-
-
 def write_video_specification(filename, video_name, driver_id, which_map, seq,
-                              start, end, is_acting, color_slope, spatial_slope):
+                              start, end, is_acting):
     """
     Writes video information into the txt file (in append mode).
     
@@ -202,10 +196,12 @@ def write_video_specification(filename, video_name, driver_id, which_map, seq,
         the start frame of the dreyeve sequence.
     end: int
         the stop frame of the dreyeve sequence.
+    is_acting: bool
+        whether the sequence contains acting subsequences or not.
     """
 
     with open(filename, 'a') as f:
-        line = [video_name, driver_id, which_map, seq, start, end, is_acting, color_slope, spatial_slope]
+        line = [video_name, driver_id, which_map, seq, start, end, is_acting]
         f.write(('{}\t'*len(line)).format(*line).rstrip())
         f.write('\n')
 
@@ -286,8 +282,8 @@ def main():
     seq, start, is_acting = get_random_clip()
 
     # sample slopes of peripheral decay
-    color_slope = np.random.choice(color_slopes)
-    spatial_slope = np.random.choice(spatial_slopes)
+    # color_slope = np.random.choice(color_slopes)
+    # spatial_slope = np.random.choice(spatial_slopes)
 
     # get driver for sequence
     driver_id = get_driver_for_sequence(seq)
@@ -315,7 +311,9 @@ def main():
         attention_map = read_attention_map(seq=seq, idx=start+offset, which_map=which_map)
 
         # permutohedral radial blend
-        blended, features = blur_with_magic_permutho(img, attention_map, color_slope, spatial_slope)
+        # blended, features = blur_with_magic_permutho(img, attention_map, color_slope, spatial_slope)
+        blended = blend_map(img, attention_map, factor=0.5)
+        blended = cv2.cvtColor(blended, cv2.COLOR_BGR2RGB)
 
         # blend
         # blended = alpha * img + (1 - alpha) * img_blur
@@ -324,13 +322,13 @@ def main():
         #
         # plt.pause(0.02)
 
-        writer.writeFrame(np.uint8(blended * 255))
+        writer.writeFrame(np.uint8(blended))
 
     writer.close()
 
     # write video parameters on txt file
     write_video_specification(output_txt, video_name, driver_id, which_map, seq,
-                              start, start + n_frames, is_acting,  color_slope, spatial_slope)
+                              start, start + n_frames, is_acting)
 
 
 # entry point
