@@ -2,8 +2,11 @@
 This file holds the two questions asked to 
 each subject during the visual assessment
 """
-
-from Tkinter import *
+import sys
+if sys.version_info > (3, 0):
+    from tkinter import *
+else:
+    from Tkinter import *  # paleolithic python version here
 
 
 def center(toplevel):
