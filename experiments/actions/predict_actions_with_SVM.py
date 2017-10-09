@@ -1,40 +1,22 @@
+"""
+Use a SVM classifier to predict driving actions starting from multi-path network activations.
+Driving actions are in the following set: ['STRAIGHT', 'LEFT', 'RIGHT', 'STILL']
+"""
+
+
+import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 from pandas import read_csv
 from os.path import join, exists
-import cv2
-import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn import metrics
+from tqdm import tqdm
+from actions.action_utils import DreyeveDataset
+from actions.action_utils import plot_confusion_matrix
 
 
 plt.ion()
-
-
-class DreyeveRun:
-    """
-    Single run of the DR(eye)VE dataset.
-    """
-    def __init__(self, dataset_data_root, num_run):
-        self.num_run = num_run
-        self.file_course   = join(dataset_data_root, '{:02d}'.format(self.num_run), 'speed_course_coord.txt')
-        self.file_steering = join(dataset_data_root, '{:02d}'.format(self.num_run), 'steering_directions.txt')
-        self.file_actions  = join(dataset_data_root, '{:02d}'.format(self.num_run), 'actions.csv')
-
-
-class DreyeveDataset:
-    """
-    Class that models the Dreyeve dataset
-    """
-    def __init__(self, dataset_root):
-
-        self.dataset_data_root = join(dataset_root, 'DATA')
-        self.dataset_pred_root = join(dataset_root, 'PREDICTIONS_2017')
-
-        self.train_runs = [DreyeveRun(self.dataset_data_root, r) for r in range(0 + 1, 38)]
-        self.test_runs  = [DreyeveRun(self.dataset_data_root, r) for r in range(38, 74 + 1)]
-
-        self.frames_each_run = 7500
-        self.num_train_frames = len(self.train_runs) * self.frames_each_run
-        self.num_test_frames  = len(self.test_runs)  * self.frames_each_run
 
 
 def create_action_file_for_each_run(dataset):
@@ -129,7 +111,7 @@ if __name__ == '__main__':
 
     activations, targets = [], []
 
-    for seq, frame, label in samples:
+    for seq, frame, label in tqdm(samples, desc='Loading data'):
 
         if 15 < int(frame) < 7499:  # ignore initial and final videoclip offset
 
@@ -141,7 +123,7 @@ if __name__ == '__main__':
 
             # Normalize and resize to make it tractable
             activation = activation / activation.max()
-            activation = cv2.resize(activation, (32, 32))
+            activation = cv2.resize(activation, (128, 128))
 
             activations.append(activation.ravel())
             targets.append(label)
@@ -159,3 +141,16 @@ if __name__ == '__main__':
     svm_pred = svm.predict(test_split['X'])
     accuracy = np.sum(svm_pred == test_split['Y']) / len(test_split['Y'])
     print('Num samples: {:06d}   ---   SVM Accuracy: {:.02f}'.format(n_samples, accuracy))
+
+    # Compute confusion matrix
+    class_names = ['STRAIGHT', 'LEFT', 'RIGHT', 'STILL']
+    confusion_matrix = metrics.confusion_matrix(y_true=test_split['Y'],
+                                                y_pred=svm_pred,
+                                                labels=class_names)
+    # Plot confusion matrix
+    plt.figure()
+    plot_confusion_matrix(confusion_matrix,
+                          classes=class_names,
+                          normalize=True,
+                          title='Normalized confusion matrix')
+    plt.waitforbuttonpress()
