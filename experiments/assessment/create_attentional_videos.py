@@ -3,25 +3,25 @@ This script is used to construct videos mimicking attentional behavior of
 humans, deep model, central baseline. Such videos will be then used for
 the quality assessment (Sec 5.4 of the paper).
 """
-import numpy as np
-from os.path import join, exists
-import os
 
-import cv2
-import skimage.io as io
-from skimage.transform import resize
 
 import uuid
+import os
+import cv2
+import numpy as np
+from os.path import join, exists
+import skimage.io as io
+from skimage.transform import resize
 from tqdm import tqdm
 import skvideo.io
-from CtypesPermutohedralLattice import PermutohedralLattice
-
+from assessment.CtypesPermutohedralLattice import PermutohedralLattice
 from scipy.ndimage.morphology import distance_transform_edt
-
 from visualization.utils import blend_map
-
 import matplotlib.pyplot as plt
+
+
 plt.ion()
+
 
 # parameters
 dreyeve_root = '/majinbu/public/DREYEVE'

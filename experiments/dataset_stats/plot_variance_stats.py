@@ -3,11 +3,11 @@ This script reads the file produced by `log_variance_stats.py`
 and plots variances in different conditions.
 """
 
+
 import numpy as np
-
 import matplotlib.pyplot as plt
+from dataset_stats.log_variance_stats import output_txt as variances_txt
 
-from log_variance_stats import output_txt as variances_txt
 
 columns = {
     'time_of_day': 0,

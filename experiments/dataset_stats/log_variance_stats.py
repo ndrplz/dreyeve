@@ -1,18 +1,16 @@
 """
 Computes the variance of the fixation map (as a distribution) 
-for each groundtruth frame.
+for each ground truth frame.
 """
 
-import numpy as np
 
+import numpy as np
+import skimage.io as io
 from os.path import join
 from glob import glob
-
-import skimage.io as io
-
 from tqdm import tqdm
+from dataset_stats.stats_utils import covariance_matrix_2d
 
-from stats_utils import covariance_matrix_2d
 
 dreyeve_root = '/majinbu/public/DREYEVE'
 output_txt = 'variances.txt'
