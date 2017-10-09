@@ -45,7 +45,6 @@ def write_line_on_file(line, f):
     f: BinaryIO
         an already opened file.
     """
-
     f.write(('{}\t' * len(line)).rstrip().format(*line))
     f.write('\n')
 
@@ -73,7 +72,9 @@ def main():
                                     dreyeve_design[line, 3],
                                     dreyeve_design[line, 4],
                                     np.linalg.det(cov),
-                                    np.trace(cov)], f)
+                                    np.trace(cov),
+                                    cov[0, 0],
+                                    cov[1, 1]], f)
 
 
 # entry point

@@ -108,7 +108,9 @@ def main():
         frames = skvideo.io.FFmpegReader(video_path).nextFrame()  # generator
 
         for frame in frames:
+            frame = cv2.resize(frame, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
             cv2.imshow('video', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # TODO pls remove this library I hate it.
+
             cv2.waitKey(1000 // 25)
 
         # ask questions
