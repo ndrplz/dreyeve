@@ -3,16 +3,15 @@ This script draws an attentional video, asks questions to
 the subject and saves its answers.
 """
 
+
+import cv2
 import numpy as np
 import skvideo.io
-
 from os.path import join, exists
-import cv2
-
-from create_attentional_videos import output_root as video_root
-from create_attentional_videos import output_txt as input_txt
-
-from questions import ask_question_1, ask_question_2
+from assessment.create_attentional_videos import output_root as video_root
+from assessment.create_attentional_videos import output_txt as input_txt
+from assessment.questions import ask_question_1
+from assessment.questions import ask_question_2
 
 
 # parameters

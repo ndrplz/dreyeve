@@ -3,9 +3,11 @@
 Numpy permutohedral lattice wrapper.
 """
 
+
 import numpy as np
 from ctypes import *
 import ctypes.util
+
 
 # permutohedral lattice library
 permdll = ctypes.CDLL('./lib/permuto.so', mode=ctypes.RTLD_LOCAL)
