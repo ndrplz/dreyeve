@@ -1,10 +1,10 @@
 clear; close all; clc;
 
 % Add Space Variant Imaging toolbox to the matlab path
-addpath(genpath('../external_libs/svistoolbox-1.0.5'))
+addpath(genpath('../../external_libs/svistoolbox-1.0.5'))
 
 % Add custom functions to apply multifovea
-addpath(genpath('./multifovea'))
+addpath(genpath('../multifovea'))
 
 % Load test image
 image = imread('bee.jpg');
