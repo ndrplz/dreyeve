@@ -1,0 +1,31 @@
+Space Variant Imaging System Toolbox for MATLAB
+
+INSTALLATION
+
+Windows
+
+1. Unzip the SVIS Toolbox ZIP file.
+
+   (Right-click svistoolbox-#.#.#.zip and select "Extract All".)
+
+2. Move the SVIS Toolbox directory to the MATLAB toolbox directory.
+
+   (Drag and drop svistoolbox-#.#.# to
+	"C:\Documents and Settings\<username>\My Documents\MATLAB".)
+
+3. Update your MATLAB path to include the SVIS Toolbox directory.
+
+   (In MATLAB, File|Set Path|Add Folder|
+    <select C:\...\MATLAB\svistoolbox-#.#.#>|OK|Save)
+
+Linux
+
+1. Extract the SVIS Toolbox archive files.
+
+   ($ tar xzvf svistoolbox-#.#.#.tgz -C ~/.matlab)
+
+2. Update your MATLAB path to include the new toolbox directory.
+
+   (In MATLAB, File|Set Path|Add Folder|
+    <select ~/.matlab/svistoolbox-#.#.#>|OK|Save)
+

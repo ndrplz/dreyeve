@@ -1,0 +1,25 @@
+Installation
+
+	Please read the INSTALL file for installation instructions.
+
+Testing
+
+	After installing the SVIS Toolbox, you may run the test file,
+	
+        >> svistest
+
+	from the MATLAB command prompt to test the software.
+
+Benchmarking
+
+	To get an idea of how the SVIS Toolbox functions perform on your
+	particular platform, you may run the benchmark program,
+
+        >> svisbenchmark
+
+	from the MATLAB command prompt.
+
+Examples
+
+	The SVIS Toolbox 'examples' directory contains example programs
+	that illustrate SVIS Toolbox function usage.
