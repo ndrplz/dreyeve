@@ -6,6 +6,9 @@ addpath(genpath('../external_libs/svistoolbox-1.0.5'))
 % Add custom functions to apply multifovea
 addpath(genpath('./multifovea'))
 
+% Add utils functions for data i/o
+addpath(genpath('./io_utils'))
+
 % Import python modules needed
 cd('./python_interop')
 utils = py.importlib.import_module('assessment_utils');
@@ -29,9 +32,21 @@ which_map = maps{randi(numel(maps))};
 % Length of the sequence
 n_frames = double(utils.n_frames);
 
-% TODO do something here
 for idx_to_load = start : start + n_frames
-    disp(idx_to_load) 
+    disp(idx_to_load)
+    
+    % Load frame
+    dreyeve_frame = load_dreyeve_frame(seq, idx_to_load);
+    dreyeve_frame = imresize(dreyeve_frame, [1080 / 2, 1920 / 2]);
+    
+    % Load attentional map
+    attention_map = load_attention_map(seq, idx_to_load, which_map);
+    attention_map = imresize(attention_map, [1080 / 2, 1920 / 2]);
+    
+    % Show result for debug
+    figure(1), subplot(121), imshow(dreyeve_frame), subplot(122), imshow(attention_map)
+    drawnow
+    
 end
 
 
