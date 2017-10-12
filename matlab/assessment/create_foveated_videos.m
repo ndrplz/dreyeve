@@ -12,7 +12,7 @@ addpath(genpath('./io_utils'))
 % Import python modules needed
 cd('./python_interop')
 utils = py.importlib.import_module('assessment_utils');
-py.reload(utils) % useful if changed
+py.reload(utils); % useful if changed
 cd('..')
 
 % Sample a sequence and a start frame
@@ -33,7 +33,6 @@ which_map = maps{randi(numel(maps))};
 n_frames = double(utils.n_frames);
 
 for idx_to_load = start : start + n_frames
-    disp(idx_to_load)
     
     % Load frame
     dreyeve_frame = load_dreyeve_frame(seq, idx_to_load);
@@ -43,9 +42,16 @@ for idx_to_load = start : start + n_frames
     attention_map = load_attention_map(seq, idx_to_load, which_map);
     attention_map = imresize(attention_map, [1080 / 2, 1920 / 2]);
     
+    % Get relative fixations (range [0, 1]) from attention maps
+    fixations_relative = get_relative_fixations_from_attention_map(attention_map);
+    
+    % Create foveated image
+    foveated_frame = filter_multifovea_rgb(dreyeve_frame, fixations_relative);
+    
     % Show result for debug
-    figure(1), subplot(121), imshow(dreyeve_frame), subplot(122), imshow(attention_map)
+    figure(1), subplot(311), imshow(dreyeve_frame), subplot(312), imshow(attention_map), subplot(313), imshow(foveated_frame)
     drawnow
+    pause
     
 end
 
