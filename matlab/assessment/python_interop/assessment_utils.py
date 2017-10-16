@@ -11,7 +11,7 @@ from os.path import join
 # parameters
 dreyeve_root = '/majinbu/public/DREYEVE'
 subsequences_txt = join(dreyeve_root, 'subsequences.txt')
-n_frames = 1000WWW
+n_frames = 1000
 shape = (1080 // 2, 1920 // 2)
 
 
