@@ -1,4 +1,4 @@
-function [ foveated_image_rgb ] = filter_multifovea_rgb(image, fix_locations)
+function [ foveated_image_rgb ] = filter_multifovea_rgb(image, fix_locations, maparc)
 % [ foveated_image_rgb ] = FILTER_MULTIFOVEA_RGB(image, fix_locations) apply
 % foveating filter to input RGB image and returns the foveated image. 
 %
@@ -11,9 +11,9 @@ green_channel = squeeze(image(:,:,2));
 blue_channel  = squeeze(image(:,:,3));
 
 % Filter each channel separately
-red_foveated   = filter_multifovea(red_channel, fix_locations);
-green_foveated = filter_multifovea(green_channel, fix_locations);
-blue_foveated  = filter_multifovea(blue_channel, fix_locations);
+red_foveated   = filter_multifovea(red_channel, fix_locations, maparc);
+green_foveated = filter_multifovea(green_channel, fix_locations, maparc);
+blue_foveated  = filter_multifovea(blue_channel, fix_locations, maparc);
 
 % Put them back together
 foveated_image_rgb = cat(3, red_foveated, green_foveated, blue_foveated);

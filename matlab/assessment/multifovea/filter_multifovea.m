@@ -1,4 +1,4 @@
-function [ foveated_image ] = filter_multifovea(image, fix_locations)
+function [ foveated_image ] = filter_multifovea(image, fix_locations, maparc)
 % [ foveated_image ] = FILTER_MULTIFOVEA(image, fix_locations) apply
 % foveating filter to input image and returns the foveated image. 
 %
@@ -15,7 +15,7 @@ svisinit
 c = sviscodec(image);
            
 % Create a multi-fovea resolution map according to given fixations
-r_multi = svisresmap_multifovea(rows, cols, fix_locations);
+r_multi = svisresmap_multifovea(rows, cols, fix_locations, maparc);
 
 % Set resolution map
 svissetresmap(c, r_multi);
