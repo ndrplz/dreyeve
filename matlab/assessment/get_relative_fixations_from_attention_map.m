@@ -7,7 +7,7 @@ function [ fixations_relative ] = get_relative_fixations_from_attention_map(atte
     attention_map_flat = attention_map(:);
     [~, fixation_idx_flat]  = sort(attention_map_flat, 'descend');
     
-    top_fixation_locations = fixation_idx_flat(1);
+    top_fixation_locations = fixation_idx_flat(1:25);
     
     % Determines the equivalent subscript values corresponding to a single index into an array.
     [fix_rows, fix_cols] = ind2sub(map_shape, top_fixation_locations);

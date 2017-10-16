@@ -41,7 +41,7 @@ def get_driver_for_sequence(seq):
 def get_random_clip():
     """
     This function returns a random clip.
-
+    
     Returns
     -------
     tuple
@@ -69,7 +69,7 @@ def get_random_clip():
             start_probs = np.zeros(shape=7500, dtype=np.float32)
             for _, start, stop in acting_subseqs:
                 start = max(0, start - n_frames)
-                stop = max(0, stop - n_frames)
+                stop = max(0, stop)
 
                 start_probs[start:stop] += 1
 
@@ -80,7 +80,6 @@ def get_random_clip():
             start = np.random.choice(range(0, 7500), p=start_probs)
 
         else:
-
             seq = np.random.choice(sequences)
 
             acting_subseqs = acting_subseqs[acting_subseqs[:, 0] == seq]
@@ -100,4 +99,11 @@ def get_random_clip():
         if start != 0:  # exit
             break
 
-    return seq, start, contains_acting
+    # count acting frames
+    is_frame_acting = np.zeros(shape=(7500,), dtype=np.int32)
+    for _, acting_start, acting_stop in acting_subseqs:
+        is_frame_acting[acting_start:acting_stop] = 1
+
+    count_acting = sum(is_frame_acting[start:start + n_frames])
+
+    return seq, start, contains_acting, count_acting
