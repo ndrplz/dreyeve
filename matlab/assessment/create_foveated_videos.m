@@ -21,6 +21,9 @@ output_logfile = fullfile(output_root, 'videos.txt');
 mkdir(output_root);
 n_videos = 20;
 
+% Load assesment experiment configuration
+config = load_config();
+
 for v=1:n_videos
     
     fprintf(1, sprintf('Creating video %02d', v));
@@ -42,11 +45,7 @@ for v=1:n_videos
 
     % Length of the sequence
     n_frames  = double(utils.n_frames);
-    end_frame = start_frame + n_frames;
-    
-    
-    n_frames = 80; %%%%%%%%%%%%%%%%%%%%%%%% REMOVE ME
-    
+    end_frame = start_frame + n_frames; 
     
     % Create video filename
     seq_str         = sprintf('%02d', seq);
@@ -63,6 +62,7 @@ for v=1:n_videos
     % Average resolution map area for current sequence
     sequence_area = 0;
     
+    if config.verbose, figure(1), end
     for idx_to_load = start_frame : start_frame + n_frames
 
         % Load frame
@@ -81,8 +81,10 @@ for v=1:n_videos
         sequence_area = sequence_area + sum_resmap;
         
         % Show result for debug
-        figure(1), subplot(311), imshow(dreyeve_frame), subplot(312), imshow(attention_map), subplot(313), imshow(foveated_frame)
-        drawnow
+        if config.verbose
+            subplot(311), imshow(dreyeve_frame), subplot(312), imshow(attention_map), subplot(313), imshow(foveated_frame)
+            drawnow
+        end
 
         % Write foveated image on video
         writeVideo(output_video, foveated_frame);
