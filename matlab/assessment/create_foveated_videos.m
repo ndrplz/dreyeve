@@ -43,7 +43,11 @@ for v=1:n_videos
     % Length of the sequence
     n_frames  = double(utils.n_frames);
     end_frame = start_frame + n_frames;
-
+    
+    
+    n_frames = 80; %%%%%%%%%%%%%%%%%%%%%%%% REMOVE ME
+    
+    
     % Create video filename
     seq_str         = sprintf('%02d', seq);
     start_frame_str = sprintf('%06d', start_frame);
@@ -51,14 +55,14 @@ for v=1:n_videos
     video_filename = concat_video_signature({driver_id, which_map, seq_str, start_frame_str, end_frame_str, is_acting}, '_') ;
     video_filename = strcat(video_filename, '.avi');
 
-    % Create video signature
-    video_signature = concat_video_signature({video_filename, driver_id, which_map, seq_str, start_frame_str, end_frame_str, is_acting, count_acting}, ';') ;
-
     % Open video reader
     output_video = VideoWriter(fullfile(output_root, video_filename));
     output_video.FrameRate = 25;
     open(output_video)
-
+    
+    % Average resolution map area for current sequence
+    sequence_area = 0;
+    
     for idx_to_load = start_frame : start_frame + n_frames
 
         % Load frame
@@ -73,8 +77,9 @@ for v=1:n_videos
         fixations_relative = get_relative_fixations_from_attention_map(attention_map);
 
         % Create foveated image
-        foveated_frame = filter_multifovea_rgb(dreyeve_frame, fixations_relative);
-
+        [foveated_frame, sum_resmap] = filter_multifovea_rgb(dreyeve_frame, fixations_relative);
+        sequence_area = sequence_area + sum_resmap;
+        
         % Show result for debug
         figure(1), subplot(311), imshow(dreyeve_frame), subplot(312), imshow(attention_map), subplot(313), imshow(foveated_frame)
         drawnow
@@ -84,6 +89,12 @@ for v=1:n_videos
 
     end
     close(output_video);
+    
+    % Compute the average area of resolution map in the past sequence
+    sequence_area = sequence_area / n_frames;
 
+    % Create video signature
+    video_signature = concat_video_signature({video_filename, driver_id, which_map, seq_str, start_frame_str, end_frame_str, is_acting, sequence_area, count_acting}, ';') ;
+    
     save_video_line_on_log_file(output_logfile, video_signature);
 end

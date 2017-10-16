@@ -1,4 +1,4 @@
-function r_multi = svisresmap_multifovea(rows, cols, fix_locations, maparc)
+function r_multi = svisresmap_multifovea(rows, cols, fix_locations)
 % MULTI_SVISRESMAP creates a resolution map with multiple foveal locations.
 %   r_multi = MULTI_SVISRESMAP(rows, cols, fix_locations)
 
@@ -9,7 +9,7 @@ function r_multi = svisresmap_multifovea(rows, cols, fix_locations, maparc)
 % fixations across the entire image" (from `svisresmap` docs).
 
 % in this case 'r_base' has size of the original image
-r_base  = svisresmap(rows, cols, 'halfres', 2.3, 'maparc', maparc);
+r_base  = svisresmap(rows, cols, 'halfres', 2.3, 'maparc', 230.8);
 
 num_fixations = size(fix_locations, 1);
 
