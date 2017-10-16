@@ -4,13 +4,17 @@ function [ attention_map ] = load_attention_map(num_seq, num_frame, which_map)
 %   LOAD_ATTENTIONAL_MAP Reads an attentional map given the sequence, the frame number
 %   and the `which_map` parameter in [`groundtruth`, `prediction`, `central_baseline`]
     
-    config = load_config();
-    dreyeve_root = config.dreyeve_root; 
+    dreyeve_root = '/majinbu/public/DREYEVE/'; % todo avoid hardcode 
     
     seq_str = sprintf('%02d', num_seq);
         
     switch which_map
         
+        case 'groundtruth'
+            frame_str     = sprintf('%06d.png', num_frame + 1); % NOTICE + 1
+            frame_path    = fullfile(dreyeve_root, 'DATA', seq_str, 'saliency_fix', frame_str);
+            attention_map = imread(frame_path);
+            
         case 'prediction'
             npz_filename  = sprintf('%06d.npz', num_frame);
             npz_path      = fullfile(dreyeve_root, 'PREDICTIONS_2017', seq_str, 'dreyeveNet', npz_filename);
