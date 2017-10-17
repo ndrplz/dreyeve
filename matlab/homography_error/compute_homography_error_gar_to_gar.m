@@ -41,7 +41,7 @@ for s=1:n_sequences
             X1 = s1.sift_gar.f1(1:2, matches(1,:)); X1(3,:) = 1; X1([1 2], :) = X1([1 2], :)*2;
             X2 = s2.sift_gar.f1(1:2, matches(2,:)); X2(3,:) = 1; X2([1 2], :) = X2([1 2], :)*2;
             
-            if size(matches, 2) >= 4
+            try
                 [H, ok] = ransacfithomography(X1, X2, 0.05);
                 if size(ok, 2) < 8, H = zeros(3); end % sanity check
                 
@@ -69,7 +69,11 @@ for s=1:n_sequences
                 error = sqrt(sum((X1_proj - X2).^2, 1));
                 sequence_frame_sum_error(k, 1) = sequence_frame_sum_error(k, 1) + nansum(error);
                 sequence_frame_sum_error(k, 2) = sequence_frame_sum_error(k, 2) + size(error, 2);
+                
+            catch ME
+                warning('Catched exception, skipping some frames');
             end
+            
         end
     end
     
