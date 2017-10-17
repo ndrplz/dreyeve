@@ -19,14 +19,14 @@ cd('..')
 output_root    = '/majinbu/public/DREYEVE/QUALITY_ASSESSMENT_VIDEOS_MATLAB';
 output_logfile = fullfile(output_root, 'videos.txt');
 mkdir(output_root);
-n_videos = 20;
+n_videos = 200;
 
 % Load assesment experiment configuration
 config = load_config();
 
-for v=1:n_videos
+for v = 1 : n_videos
     
-    fprintf(1, sprintf('Creating video %02d', v));
+    fprintf(1, sprintf('Creating video %02d...\n', v));
 
     % Sample a sequence and a start frame
     python_tuple = utils.get_random_clip();
@@ -46,7 +46,7 @@ for v=1:n_videos
     % Length of the sequence
     n_frames  = double(utils.n_frames);
     end_frame = start_frame + n_frames; 
-    
+        
     % Create video filename
     seq_str         = sprintf('%02d', seq);
     start_frame_str = sprintf('%06d', start_frame);
@@ -96,7 +96,8 @@ for v=1:n_videos
     sequence_area = sequence_area / n_frames;
 
     % Create video signature
-    video_signature = concat_video_signature({video_filename, driver_id, which_map, seq_str, start_frame_str, end_frame_str, is_acting, sequence_area, count_acting}, ';') ;
+    video_signature = concat_video_signature({video_filename, driver_id, which_map, seq_str, start_frame_str, end_frame_str, is_acting, sequence_area, sprintf('%06d', count_acting)}, ';') ;
     
+    % Log current video signature
     save_video_line_on_log_file(output_logfile, video_signature);
 end
