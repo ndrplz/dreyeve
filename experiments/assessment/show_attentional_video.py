@@ -1,6 +1,6 @@
 """
-This script draws an attentional video, asks questions to 
-the subject and saves its answers.
+This script draws an load a precomputed attentional video,
+asks questions to the subject and saves its answers.
 """
 
 
@@ -8,19 +8,36 @@ import cv2
 import numpy as np
 import skvideo.io
 from os.path import join, exists
-from assessment.create_attentional_videos import output_root as video_root
-from assessment.create_attentional_videos import output_txt as input_txt
-from assessment.questions import ask_question_1
-from assessment.questions import ask_question_2
+from questions import ask_question_1
+from questions import ask_question_2
 
 
-# parameters
-output_file = 'assessment_answers.txt'
-videos_each_subject = 5
-videos_to_skip = 0
+class VideoSignature:
+    """
+    This class collects all information available for a certain assessment video.
+    """
+    def __init__(self, **kwargs):
+
+        # Add all members loaded from file
+        self.__dict__.update(kwargs)
+
+        # Add numeric version of these parameters in case we need
+        self.seq           = int(self.seq_str)
+        self.start_frame   = int(self.start_frame_str)
+        self.end_frame     = int(self.end_frame_str)
+        self.sequence_area = float(self.sequence_area_str)
+        self.count_acting  = int(self.count_acting_str)
+
+    def __str__(self):
+        """
+        Override string representation of a VideoSignature to ease readability when logging
+        """
+        return '{},{},{},{},{},{},{},{},{}'.format(self.video_filename, self.driver_id, self.which_map, self.seq_str,
+                                                   self.start_frame_str, self.end_frame_str, self.is_acting,
+                                                   self.sequence_area_str, self.count_acting_str)
 
 
-def get_subject_id():
+def get_subject_id(answers_file, separator=','):
     """
     Reads the answer file and provides a new subject id.
     
@@ -30,99 +47,107 @@ def get_subject_id():
         a new subject id like: `subject_004`
     """
 
-    if not exists(output_file):
+    if not exists(answers_file):
         subject_id = 0
     else:
-        with open(output_file, mode='r') as f:
-            subjects = [int(l.split('\t')[0][-3:]) for l in f.readlines()]
+        with open(answers_file, mode='r') as f:
+            subjects = [int(l.split(separator)[0][-3:]) for l in f.readlines()]
         subject_id = np.max(subjects) + 1
 
     return 'subject_{:03d}'.format(subject_id)
 
 
-def get_random_video():
+def get_random_video(video_signatures_file, line_separator):
     """
     Reads the file containing the list of videos
     and randomly samples one of them, returning related information.
     
     Returns
     -------
-    list
-        a list of video parameters (filename, attentional_behavior, dreyeve_sequence, frame_start, frame_end)
+    VideoSignature
+        VideoSignature object which contains all information on assessment video
     """
 
-    with open(input_txt, mode='r') as f:
+    with open(video_signatures_file, mode='r') as f:
         lines = [l.strip() for l in f.readlines()]
 
+    # Load and parse a random line in the video signature file
     video_line = np.random.choice(lines)
-    video_params = video_line.split('\t')
+    video_params = video_line.split(line_separator)
 
-    return video_params
+    # Create and return a VideoSignature object with all information we need for this video
+    signature_dict = {'video_filename': video_params[0],
+                      'driver_id': video_params[1],
+                      'which_map': video_params[2],
+                      'seq_str': video_params[3],
+                      'start_frame_str': video_params[4],
+                      'end_frame_str': video_params[5],
+                      'is_acting': video_params[6],
+                      'sequence_area_str': video_params[7],
+                      'count_acting_str': video_params[8]}
+    return VideoSignature(**signature_dict)
 
 
-def log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
-                seq, start, end, is_acting, color_slope, spatial_slope):
+def log_on_file(output_file, subject_id, video_signature, subject_answers):
     """
     Logs the answers of a subject to the text file.
     
     Parameters
     ----------
+    output_file: str
+        path to the output file
     subject_id: str
-        the id of the subject.
-    video_filename: str
-        the filename of the video
-    perceived_safeness: int
-        the level of perceived safeness of attentional maps.
-    turing_guess: str
-        guess of the subject among [`Human`, `AI`].
-    attentional_behavior: str
-        the actual source of attentional maps among [`groundtruth`, `prediction`, `central_baseline`].
-    seq: int
-        the number of the dreyeve sequence.
-    start: int
-        the starting frame in the dreyeve sequence.
-    end: int
-        the ending frame in the dreyeve sequence.
+        identifier of the subject
+    video_signature: VideoSignature
+        signature of the sampled video
+    subject_answers: list
+        subject's answers [perceived_safeness, turing_guess]
     """
 
     with open(output_file, 'a') as f:
-        line = [subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
-                seq, start, end, is_acting, color_slope, spatial_slope]
-        f.write(('{}\t'*len(line)).format(*line).rstrip())
-        f.write('\n')
+
+        perceived_safeness, turing_guess = subject_answers
+
+        line = '{},{},{},{}\n'.format(subject_id, video_signature, perceived_safeness, turing_guess)
+        f.write(line)
 
 
 def main():
     """ Main function """
 
-    # get an id for the new subject
-    subject_id = get_subject_id()
+    video_root = '/majinbu/public/DREYEVE/QUALITY_ASSESSMENT_VIDEOS_MATLAB'
+    video_signatures_file = join(video_root, 'videos.txt')
+
+    # Experiment parameters
+    answers_file = 'assessment_answers.txt'
+    videos_each_subject = 5
+    videos_to_skip = 0
+
+    # ID of the current subject
+    subject_id = get_subject_id(answers_file)
 
     for i in range(0, videos_each_subject):
-        # get a random video
-        video_filename, driver, attentional_behavior, seq, start, end, is_acting, color_slope, spatial_slope = get_random_video()
 
-        # display video
-        video_path = join(video_root, video_filename)
+        # Get a random video signature from pre-processed videos
+        video_signature = get_random_video(video_signatures_file, line_separator=';')
+
+        # Display video
+        video_path = join(video_root, video_signature.video_filename)
         frames = skvideo.io.FFmpegReader(video_path).nextFrame()  # generator
-
         for frame in frames:
             frame = cv2.resize(frame, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
-            cv2.imshow('video', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))  # TODO pls remove this library I hate it.
-
+            cv2.imshow('video', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
             cv2.waitKey(1000 // 25)
 
-        # ask questions
+        # Ask questions
         perceived_safeness = ask_question_1()
         turing_guess = ask_question_2()
 
-        # write line on file
+        # Log on file the current answer
         if i >= videos_to_skip:
-            log_on_file(subject_id, video_filename, perceived_safeness, turing_guess, attentional_behavior,
-                        seq, start, end, is_acting, color_slope, spatial_slope
-                        )
+            log_on_file(answers_file, subject_id, video_signature, subject_answers=[perceived_safeness, turing_guess])
 
 
-# entry point
+# Entry point
 if __name__ == '__main__':
     main()
