@@ -88,4 +88,4 @@ for s=1:n_sequences
     mean_sequence_error(s) = this_sequence_mean_error;
 end
 
-save('average_error_per_sequence_etg_to_gar', mean_sequence_error);
+save('average_error_per_sequence_etg_to_gar', 'mean_sequence_error');
