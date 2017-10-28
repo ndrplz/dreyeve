@@ -80,5 +80,5 @@ for s=1:n_sequences
     
 end
 
-save('average_error_per_sequence_gar_to_gar', 'mean_sequence_error');
+save('error_means_and_vars_gar_to_gar', 'error_means_and_vars');
 
