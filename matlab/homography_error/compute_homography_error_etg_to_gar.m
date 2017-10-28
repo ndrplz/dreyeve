@@ -10,11 +10,13 @@ addpath(genpath('vlfeat-0.9.20'));
 
 % Parameters
 dreyeve_data_root = '/majinbu/public/DREYEVE/DATA';
-
-% Loop over sequences
 all_sequences = 1:74;
 n_sequences = numel(all_sequences);
-mean_sequence_error = zeros(n_sequences, 1);
+
+% For each sequence, we store mean (col 1) and variance (col 2) of error
+error_means_and_vars = zeros(n_sequences, 2);
+
+% Loop over sequences
 for s=1:n_sequences
     
     seq = all_sequences(s);
@@ -29,6 +31,11 @@ for s=1:n_sequences
     
     % rows are frames, cols are (mean error, number of matches)
     sequence_frame_sum_error = zeros(n_frames, 2);
+    
+    % Initialize counters
+    m = 0;  % running mean
+    v = 0;  % running variance
+    n = 0;  % number of total matches
     
     % Loop over list
     for f=1:100:n_frames
@@ -51,41 +58,36 @@ for s=1:n_sequences
         try
             % Fit ransac and find homography
             [H, ok] = ransacfithomography(X1, X2, 0.05);
-            if size(ok, 2) < 8, H = zeros(3); end % sanity check
-            
-            if 0
-                % Check that the homography computed now is the same as the one
-                % stored on file. Assertion: the sum of absolute difference is
-                % lesser 1e-7.
-                stored_H_filename = fullfile(seq_root, 'homography', sprintf('gar_%06d_etg_%06d.mat', sift_gar.frame, sift_etg.frame));
-                stored_H = load(stored_H_filename);
-                stored_H = stored_H.H_struct.H;
-                sad = sum(sum(abs(H - stored_H)));
-                assert(sad < 1e-7, sprintf('%s is different from the one computed now!', stored_H_filename));
+            if size(ok, 2) >= 8
+                
+                % Extract only matches that homography considers inliers
+                X1 = X1(:, ok);
+                X2 = X2(:, ok);
+                
+                % Project
+                X1_proj = H * X1;
+                X1_proj = X1_proj ./ repmat(X1_proj(3, :), 3, 1);
+                
+                % Compute error
+                errors = sqrt(sum((X1_proj - X2).^2, 1));
+                errors(isnan(errors)) = [];
+                for e=1:size(errors, 2)
+                    % update mean and variance
+                    n = n+1;
+                    delta = errors(1, e) - m;
+                    m = m + delta / n;
+                    delta2 = errors(1, e) - m;
+                    v = v + delta * delta2;
+                end
             end
-            
-            % Extract only matches that homography considers inliers
-            X1 = X1(:, ok);
-            X2 = X2(:, ok);
-            
-            % Project
-            X1_proj = H * X1;
-            X1_proj = X1_proj ./ repmat(X1_proj(3, :), 3, 1);
-            
-            % Compute error
-            error = sqrt(sum((X1_proj - X2).^2, 1));
-            sequence_frame_sum_error(f, 1) = nansum(error);
-            sequence_frame_sum_error(f, 2) = size(error, 2);
         catch ME
             warning('Catched exception, skipping some frames');
         end
     end
     
-    % Average across frame errors
-    this_sequence_mean_error = sum(sequence_frame_sum_error(:, 1)) / sum(sequence_frame_sum_error(:, 2));
-    
-    % Set into mean sequence error
-    mean_sequence_error(s) = this_sequence_mean_error;
+    % Set mean and var for this sequence
+    error_means_and_vars(s, 1) = m;
+    error_means_and_vars(s, 2) = v;
 end
 
-save('average_error_per_sequence_etg_to_gar', 'mean_sequence_error');
+save('error_means_and_vars_etg_to_gar', 'error_means_and_vars');
