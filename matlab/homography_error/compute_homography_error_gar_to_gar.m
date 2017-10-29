@@ -27,9 +27,9 @@ for s=1:n_sequences
     n_frames = numel(sift_gar_li);
     
     % Initialize counters
-    m = 0;  % running mean
-    v = 0;  % running variance
-    n = 0;  % number of total matches
+    r_m = 0;  % running mean
+    r_v = 0;  % running variance
+    n   = 0;  % number of total matches
     
     for f = 1 :100: n_frames
         s1 = load(fullfile(seq_root, 'sift', sift_gar_li(f).name));
@@ -61,10 +61,10 @@ for s=1:n_sequences
                     for e=1:size(errors, 2)
                         % update mean and variance
                         n = n+1;
-                        delta = errors(1, e) - m;
-                        m = m + delta / n;
-                        delta2 = errors(1, e) - m;
-                        v = v + delta * delta2;
+                        delta = errors(1, e) - r_m;
+                        r_m = r_m + delta / n;
+                        delta2 = errors(1, e) - r_m;
+                        r_v = r_v + delta * delta2;
                     end
                 end
             catch ME
@@ -75,8 +75,9 @@ for s=1:n_sequences
     end
     
     % Set mean and var for this sequence
-    error_means_and_vars(s, 1) = m;
-    error_means_and_vars(s, 2) = v;
+    r_v = r_v / (n-1);
+    error_means_and_vars(s, 1) = r_m;
+    error_means_and_vars(s, 2) = r_v;
     
 end
 

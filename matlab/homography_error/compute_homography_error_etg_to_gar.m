@@ -33,9 +33,9 @@ for s=1:n_sequences
     sequence_frame_sum_error = zeros(n_frames, 2);
     
     % Initialize counters
-    m = 0;  % running mean
-    v = 0;  % running variance
-    n = 0;  % number of total matches
+    r_m = 0;  % running mean
+    r_v = 0;  % running variance
+    n   = 0;  % number of total matches
     
     % Loop over list
     for f=1:100:n_frames
@@ -74,10 +74,10 @@ for s=1:n_sequences
                 for e=1:size(errors, 2)
                     % update mean and variance
                     n = n+1;
-                    delta = errors(1, e) - m;
-                    m = m + delta / n;
-                    delta2 = errors(1, e) - m;
-                    v = v + delta * delta2;
+                    delta = errors(1, e) - r_m;
+                    r_m = r_m + delta / n;
+                    delta2 = errors(1, e) - r_m;
+                    r_v = r_v + delta * delta2;
                 end
             end
         catch ME
@@ -86,8 +86,9 @@ for s=1:n_sequences
     end
     
     % Set mean and var for this sequence
-    error_means_and_vars(s, 1) = m;
-    error_means_and_vars(s, 2) = v;
+    r_v = r_v / (n-1);
+    error_means_and_vars(s, 1) = r_m;
+    error_means_and_vars(s, 2) = r_v;
 end
 
 save('error_means_and_vars_etg_to_gar', 'error_means_and_vars');
