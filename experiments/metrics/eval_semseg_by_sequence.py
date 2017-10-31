@@ -2,30 +2,27 @@
 This script proposes some test sequence of semantic segmentation to the attention
 of a human inspector, that has to decide if the segmentation is good or not.
 """
-
-import numpy as np
+from __future__ import print_function
 import cv2
-
+import numpy as np
 from os.path import join
 from glob import glob
-
 from random import choice
-
 from train.utils import seg_to_colormap
 from train.config import dreyeve_test_seq
 
 
 if __name__ == '__main__':
 
-    dreyeve_dir = 'Z:/DATA'
+    dreyeve_data_root = '/majinbu/public/DREYEVE/DATA'
     sequences = dreyeve_test_seq
 
     good_sequences = []
     for seq in sequences:
 
-        print 'Evaluating sequence {}'.format(seq)
+        print('Evaluating sequence {}'.format(seq))
 
-        sequence_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'semseg')
+        sequence_dir = join(dreyeve_data_root, '{:02d}'.format(seq), 'semseg')
         seg_list = glob(join(sequence_dir, '*.npz'))
 
         key = 0
@@ -41,6 +38,6 @@ if __name__ == '__main__':
 
         if key == ord('g'):
             good_sequences.append(seq)
-            print good_sequences
+            print(good_sequences)
 
-    print good_sequences
+    print(good_sequences)

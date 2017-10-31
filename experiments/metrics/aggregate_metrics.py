@@ -1,8 +1,5 @@
 import numpy as np
-
-import os
 from os.path import join
-from glob import glob
 
 
 def file_len(fname):
@@ -63,4 +60,3 @@ if __name__ == '__main__':
                   mode='w') as f:
             f.write(header)
             f.write(('{},'*means.size).format(*list(means)))
-
