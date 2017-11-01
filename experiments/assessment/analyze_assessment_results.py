@@ -94,7 +94,8 @@ if __name__ == '__main__':
     #####################################################################
     # Plot score distributions across different attention maps
     #####################################################################
-    def plot_score_distribution_across_maps(acting_filter, title='', line_width=3):
+    def plot_score_distribution_across_maps(acting_filter, title='',
+                                            line_width=1, markersize=5, title_fontsize=20, label_fontsize=10):
 
         # Filter scores of the three kind of maps according to given `acting` indexes
         is_pred_scores   = sorted(np.array(data_frame[is_prediction & acting_filter]['safeness']))  # sort for plotting
@@ -108,14 +109,18 @@ if __name__ == '__main__':
 
         # Plot
         plt.figure()
-        handle_prediction, = plt.plot(is_pred_scores,   is_pred_scores_prob,   '-o', linewidth=line_width)
-        handle_center,     = plt.plot(is_center_scores, is_center_scores_prob, '-*', linewidth=line_width)
-        handle_human,      = plt.plot(is_human_scores,  is_human_scores_prob,  '-x', linewidth=line_width)
+        plot_params = {'linewidth': line_width, 'markersize': markersize}
+        handle_prediction, = plt.plot(is_pred_scores,   is_pred_scores_prob,   '-o', **plot_params)
+        handle_center,     = plt.plot(is_center_scores, is_center_scores_prob, '-*', **plot_params)
+        handle_human,      = plt.plot(is_human_scores,  is_human_scores_prob,  '-s', **plot_params)
         plt.legend([handle_prediction, handle_center, handle_human], ['Prediction', 'Center Baseline', 'Human'])
         plt.xticks(np.arange(start=1, stop=5 + 1, step=1.0))
-        plt.title(title)
+        plt.xlabel('Safeness score', fontsize=label_fontsize)
+        plt.ylabel('Probability',    fontsize=label_fontsize)
+        plt.title(title, fontsize=title_fontsize)
 
-    plot_score_distribution_across_maps(acting_filter=True,       title='ALL')
-    plot_score_distribution_across_maps(acting_filter=is_acting,  title='ACTING')
-    plot_score_distribution_across_maps(acting_filter=not_acting, title='NOT ACTING')
+    figure_params = {'line_width': 5, 'markersize': 12, 'title_fontsize': 20, 'label_fontsize': 14}
+    plot_score_distribution_across_maps(acting_filter=True,       title='OVERALL',    **figure_params)
+    plot_score_distribution_across_maps(acting_filter=is_acting,  title='ACTING',     **figure_params)
+    plot_score_distribution_across_maps(acting_filter=not_acting, title='NOT ACTING', **figure_params)
     plt.show()
