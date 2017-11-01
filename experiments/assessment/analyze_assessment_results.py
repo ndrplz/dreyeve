@@ -2,15 +2,15 @@ from __future__ import division
 from __future__ import print_function
 import numpy as np
 import pandas as pd
+import scipy.stats as stats
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
 
-    answers_file = 'assessment_answers.txt'
+    answers_file = 'assessment_answers_header.txt'
 
-    # todo add the following header to the logs recorded in 'show_attentional_video.py':
-    # todo subject_id,video_filename,driver_id,which_map,seq,start_frame,end_frame,is_acting,sequence_area,count_acting,safeness,turing
-
+    # Parse answers
     data_frame = pd.read_csv(answers_file)
 
     #####################################################################
@@ -53,8 +53,10 @@ if __name__ == '__main__':
     subject_thinks_human_safeness_mean   = data_frame[subject_thinks_human].mean()['safeness']
     subject_thinks_human_safeness_var    = data_frame[subject_thinks_human].var()['safeness']
 
-    center_when_acting     = data_frame[is_center & is_acting].mean()['safeness']
-    center_when_not_acting = data_frame[is_center & not_acting].mean()['safeness']
+    human_when_acting          = data_frame[is_human & is_acting].mean()['safeness']
+    human_when_not_acting      = data_frame[is_human & not_acting].mean()['safeness']
+    center_when_acting         = data_frame[is_center & is_acting].mean()['safeness']
+    center_when_not_acting     = data_frame[is_center & not_acting].mean()['safeness']
     prediction_when_acting     = data_frame[is_prediction & is_acting].mean()['safeness']
     prediction_when_not_acting = data_frame[is_prediction & not_acting].mean()['safeness']
 
@@ -88,3 +90,32 @@ if __name__ == '__main__':
         safeness_distribution[:, col] /= np.sum(safeness_distribution[:, col])
     safeness_distribution_frame = pd.DataFrame(safeness_distribution, index=['TP', 'TN', 'FP', 'FN'])
     print(safeness_distribution_frame)
+
+    #####################################################################
+    # Plot score distributions across different attention maps
+    #####################################################################
+    def plot_score_distribution_across_maps(acting_filter, title='', line_width=3):
+
+        # Filter scores of the three kind of maps according to given `acting` indexes
+        is_pred_scores   = sorted(np.array(data_frame[is_prediction & acting_filter]['safeness']))  # sort for plotting
+        is_center_scores = sorted(np.array(data_frame[is_center     & acting_filter]['safeness']))  # sort for plotting
+        is_human_scores  = sorted(np.array(data_frame[is_human      & acting_filter]['safeness']))  # sort for plotting
+
+        # Compute probability of each score
+        is_pred_scores_prob   = stats.norm.pdf(is_pred_scores,   np.mean(is_pred_scores),   np.std(is_pred_scores))
+        is_center_scores_prob = stats.norm.pdf(is_center_scores, np.mean(is_center_scores), np.std(is_center_scores))
+        is_human_scores_prob  = stats.norm.pdf(is_human_scores,  np.mean(is_human_scores),  np.std(is_human_scores))
+
+        # Plot
+        plt.figure()
+        handle_prediction, = plt.plot(is_pred_scores,   is_pred_scores_prob,   '-o', linewidth=line_width)
+        handle_center,     = plt.plot(is_center_scores, is_center_scores_prob, '-*', linewidth=line_width)
+        handle_human,      = plt.plot(is_human_scores,  is_human_scores_prob,  '-x', linewidth=line_width)
+        plt.legend([handle_prediction, handle_center, handle_human], ['Prediction', 'Center Baseline', 'Human'])
+        plt.xticks(np.arange(start=1, stop=5 + 1, step=1.0))
+        plt.title(title)
+
+    plot_score_distribution_across_maps(acting_filter=True,       title='ALL')
+    plot_score_distribution_across_maps(acting_filter=is_acting,  title='ACTING')
+    plot_score_distribution_across_maps(acting_filter=not_acting, title='NOT ACTING')
+    plt.show()
