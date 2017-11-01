@@ -16,7 +16,6 @@ if __name__ == '__main__':
     #####################################################################
     # Prepare indexes
     #####################################################################
-
     is_human      = data_frame['which_map'] == 'groundtruth'
     is_center     = data_frame['which_map'] == 'central_baseline'
     is_prediction = data_frame['which_map'] == 'prediction'
@@ -31,7 +30,6 @@ if __name__ == '__main__':
     #####################################################################
     # Overall Statistics
     #####################################################################
-
     num_rows = len(data_frame)
     num_subjects = len(data_frame['subject_id'].unique())
 
@@ -63,7 +61,6 @@ if __name__ == '__main__':
     #####################################################################
     # Turing Test - Confusion Matrix
     #####################################################################
-
     TP_idx = subject_thinks_human   & is_human
     TN_idx = subject_thinks_machine & is_machine
     FN_idx = subject_thinks_machine & is_human
@@ -78,7 +75,6 @@ if __name__ == '__main__':
     #####################################################################
     # Turing Test - Score distribution across confusion matrix
     #####################################################################
-
     safeness_range = [1, 2, 3, 4, 5]
     safeness_distribution = np.zeros(shape=(4, len(safeness_range)))
 
@@ -94,8 +90,8 @@ if __name__ == '__main__':
     #####################################################################
     # Plot score distributions across different attention maps
     #####################################################################
-    def plot_score_distribution_across_maps(acting_filter, title='',
-                                            line_width=1, markersize=5, title_fontsize=20, label_fontsize=10):
+    def plot_score_distribution_across_maps(acting_filter, title='', line_width=1, markersize=5,
+                                            title_fontsize=20, label_fontsize=10, savefig=False):
 
         # Filter scores of the three kind of maps according to given `acting` indexes
         is_pred_scores   = sorted(np.array(data_frame[is_prediction & acting_filter]['safeness']))  # sort for plotting
@@ -108,19 +104,34 @@ if __name__ == '__main__':
         is_human_scores_prob  = stats.norm.pdf(is_human_scores,  np.mean(is_human_scores),  np.std(is_human_scores))
 
         # Plot
-        plt.figure()
+        plt.figure(figsize=(9, 5))  # `figsize` is in (w, h) in inches
         plot_params = {'linewidth': line_width, 'markersize': markersize}
         handle_prediction, = plt.plot(is_pred_scores,   is_pred_scores_prob,   '-o', **plot_params)
         handle_center,     = plt.plot(is_center_scores, is_center_scores_prob, '-*', **plot_params)
         handle_human,      = plt.plot(is_human_scores,  is_human_scores_prob,  '-s', **plot_params)
-        plt.legend([handle_prediction, handle_center, handle_human], ['Prediction', 'Center Baseline', 'Human'])
+        plt.legend([handle_prediction, handle_center, handle_human],
+                   ['Model Prediction', 'Center Baseline', 'Human Groundtruth'],
+                   fontsize=label_fontsize - 3)
         plt.xticks(np.arange(start=1, stop=5 + 1, step=1.0))
         plt.xlabel('Safeness score', fontsize=label_fontsize)
         plt.ylabel('Probability',    fontsize=label_fontsize)
+        plt.gca().set_ylim(0, 0.4)
         plt.title(title, fontsize=title_fontsize)
+        plt.tight_layout()
+        if savefig:
+            plt.savefig('score_distribution_{}.png'.format(title.replace(' ', '')))  # no whitespace in filename
 
-    figure_params = {'line_width': 5, 'markersize': 12, 'title_fontsize': 20, 'label_fontsize': 14}
-    plot_score_distribution_across_maps(acting_filter=True,       title='OVERALL',    **figure_params)
-    plot_score_distribution_across_maps(acting_filter=is_acting,  title='ACTING',     **figure_params)
-    plot_score_distribution_across_maps(acting_filter=not_acting, title='NOT ACTING', **figure_params)
-    plt.show()
+    figure_params = {'line_width': 5, 'markersize': 12, 'title_fontsize': 24, 'label_fontsize': 18, 'savefig': False}
+    plot_score_distribution_across_maps(acting_filter=True,       title='Overall',    **figure_params)
+    plot_score_distribution_across_maps(acting_filter=is_acting,  title='Acting',     **figure_params)
+    plot_score_distribution_across_maps(acting_filter=not_acting, title='Not Acting', **figure_params)
+
+    #####################################################################
+    # Score variance across difference drivers
+    #####################################################################
+    score_across_drivers = []
+    for driver_id in data_frame['driver_id'].unique():
+        is_cur_driver   = data_frame['driver_id'] == driver_id
+        data_cur_driver = data_frame[is_human & is_cur_driver]
+        score_across_drivers.append(data_cur_driver['safeness'].mean())
+    print('Variance of score across different drivers: {:.02f}'.format(np.var(score_across_drivers)))
