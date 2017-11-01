@@ -135,3 +135,15 @@ if __name__ == '__main__':
         data_cur_driver = data_frame[is_human & is_cur_driver]
         score_across_drivers.append(data_cur_driver['safeness'].mean())
     print('Variance of score across different drivers: {:.02f}'.format(np.var(score_across_drivers)))
+
+    #####################################################################
+    # Average area of attention map
+    #####################################################################
+    attention_map_areas = {'prediction': data_frame[is_prediction]['sequence_area'].mean(),
+                           'center':     data_frame[is_center]['sequence_area'].mean(),
+                           'human':      data_frame[is_human]['sequence_area'].mean()}
+
+    # Normalize dividing for max area
+    max_area = np.max([v for v in attention_map_areas.values()])
+    attention_map_areas = {map_type: area / max_area for (map_type, area) in attention_map_areas.items()}
+    print('Average attention map area (normalized): {}'.format(attention_map_areas))
