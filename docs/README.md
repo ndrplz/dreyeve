@@ -1,8 +1,10 @@
-### dr(eye)ve supplementary material
+# Predicting the Driver’s Focus of Attention: the DR(eye)VE Project
 
-a collection of resources useful for the comprehension of the paper.
+## Supplementary Material
 
-#### How was Fig.7 made?
+Collection of resources useful for the comprehension of the paper.
+
+### How was Fig.7 made?
 Sec 3.1 of the paper investigates on what human fixations focus on 
 while driving, in terms of semantic classes. As explained in the paper,
 this analysis has been carried out by normalizing the fixation map
@@ -21,7 +23,6 @@ Then, from accumulated class occurrences for each threshold we build a
 histogram, that is represented by Fig.7.
 
 ![fig7](img/fig7.png "fig7")
-
 
 In this figure, by isolating the leftmost bar for each class, we obtain 
 the histogram relative to the first threshold. By isolating the second one from 
