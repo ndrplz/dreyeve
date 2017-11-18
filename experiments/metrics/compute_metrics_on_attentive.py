@@ -1,6 +1,7 @@
+from __future__ import print_function
+import csv
 import numpy as np
 from os.path import join
-import csv
 
 
 if __name__ == '__main__':

@@ -1,16 +1,15 @@
-import numpy as np
+from __future__ import print_function
 import cv2
-
-import argparse
-
 import os
+import argparse
+import numpy as np
 from tqdm import tqdm
 from os.path import join
 from glob import glob
-
 from computer_vision_utils.io_helper import read_image
-
-from metrics import kld_numeric, cc_numeric, ig_numeric
+from metrics.metrics import kld_numeric
+from metrics.metrics import cc_numeric
+from metrics.metrics import ig_numeric
 
 
 class MetricSaver:
@@ -446,7 +445,7 @@ def compute_metrics_for_new_model(sequences):
                                   resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # prediction dirs
         dir_pred_dreyevenet = join(pred_dir, '{:02d}'.format(seq), 'dreyeveNet')
@@ -458,7 +457,7 @@ def compute_metrics_for_new_model(sequences):
         dir_gt_sal = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         dir_gt_fix = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='new')
         ablation = AblationStudy(pred_dir, seq)
 
@@ -505,10 +504,10 @@ def compute_metrics_for_old_model(sequences):
     dreyeve_dir = 'Z:\\DATA'
 
     ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
-                                  resize_dim=(gt_h, gt_w))
+                             resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # prediction dirs
         seq_pred_dir = join(pred_dir, '{:02d}'.format(seq), 'output')
@@ -517,7 +516,7 @@ def compute_metrics_for_old_model(sequences):
         seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='old')
 
         for fr in tqdm(xrange(15, 7500 - 1, 5)):
@@ -555,7 +554,7 @@ def compute_metrics_for_mlnet_model(sequences):
                                   resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # prediction dirs
         seq_pred_dir = join(pred_dir, '{:02d}'.format(seq), 'output')
@@ -564,7 +563,7 @@ def compute_metrics_for_mlnet_model(sequences):
         seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='old')
 
         for fr in tqdm(xrange(15, 7500 - 1, 5)):
@@ -602,7 +601,7 @@ def compute_metrics_for_rmdn_model(sequences):
                                   resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # prediction dirs
         seq_pred_dir = join(pred_dir, '{:02d}'.format(seq), 'output')
@@ -611,7 +610,7 @@ def compute_metrics_for_rmdn_model(sequences):
         seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='old')
 
         for fr in tqdm(xrange(15, 7500 - 1, 5)):
@@ -652,13 +651,13 @@ def compute_metrics_for_central_gaussian(sequences):
                                   resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # gt dirs
         seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='central_gaussian')
 
         for fr in tqdm(xrange(15, 7500 - 1, 5)):
@@ -697,13 +696,13 @@ def compute_metrics_for_mean_gt(sequences):
                                   resize_dim=(gt_h, gt_w))
 
     for seq in sequences:
-        print 'Processing sequence {}'.format(seq)
+        print('Processing sequence {}'.format(seq))
 
         # gt dirs
         seq_gt_sal_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
         seq_gt_fix_dir = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
 
-        print 'Computing metrics...'
+        print('Computing metrics...')
         metric_saver = MetricSaver(pred_dir, seq, model='mean_gt')
 
         for fr in tqdm(xrange(15, 7500 - 1, 5)):
@@ -739,7 +738,7 @@ def compute_metrics_for_wang2015consistent(sequences):
     ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
-    print 'Computing metrics...'
+    print('Computing metrics...')
     last_seq = 0
     for index in tqdm(xrange(0, len(pred_list))):
         pred_img = pred_list[index]
@@ -794,7 +793,7 @@ def compute_metrics_for_wang2015saliency(sequences):
     ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
-    print 'Computing metrics...'
+    print('Computing metrics...')
     last_seq = 0
     for index in tqdm(xrange(0, len(pred_list))):
         pred_img = pred_list[index]
@@ -851,7 +850,7 @@ def compute_metrics_for_mathe(sequences):
     ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
                                   resize_dim=(gt_h, gt_w))
 
-    print 'Computing metrics...'
+    print('Computing metrics...')
     last_seq = 0
     for index in tqdm(xrange(0, len(pred_list))):
         pred_img = pred_list[index]

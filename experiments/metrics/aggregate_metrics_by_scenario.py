@@ -2,8 +2,9 @@
 This script is meant to aggregate metrics in different triplets of scenarios, in order to make
 one plot for each scenario showing the kld distance in different subcontexts like (day/rainy, night/sunny etc.)
 """
+from __future__ import print_function
+from __future__ import division
 import numpy as np
-
 from os.path import join
 from train.config import dreyeve_test_seq
 
@@ -17,12 +18,12 @@ def dump_dict_to_csv(dict):
 
 if __name__ == '__main__':
 
-    dreyeve_dir = 'Z:/'
+    dreyeve_root = '/majinbu/public/DREYEVE'
     aggregate_by = 1  # 0 for time_of_day, 1 for weather, 2 for scenario
     metric_to_merge = 'metrics/kld_mean.txt'
 
     # read design file and create dictionaries
-    with open(join(dreyeve_dir, 'dr(eye)ve_design.txt')) as f:
+    with open(join(dreyeve_root, 'dr(eye)ve_design.txt')) as f:
         content = f.readlines()
 
     design = {}
@@ -58,7 +59,7 @@ if __name__ == '__main__':
             for seq in sequences:
                 header = ''
                 # read metric for all sequences
-                metric_file = join(dreyeve_dir, 'PREDICTIONS_2017', '{:02d}'.format(seq),
+                metric_file = join(dreyeve_root, 'PREDICTIONS_2017', '{:02d}'.format(seq),
                                    metric_to_merge)
 
                 # read
@@ -75,6 +76,6 @@ if __name__ == '__main__':
             scenario_dict[aggr_key] = means[4:]
 
     for aggr_key, subdict in design.iteritems():
-        print aggr_key
+        print(aggr_key)
 
-        print np.mean(np.array(subdict.values()), axis=0)
+        print(np.mean(np.array(subdict.values()), axis=0))

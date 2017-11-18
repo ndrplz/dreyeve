@@ -2,21 +2,17 @@
 Script that investigates frames where global predictions are 
 better than single branch predictions with KL measures.
 """
-
-import numpy as np
-import cv2
-
+from __future__ import print_function
 import os
+import cv2
+import numpy as np
 from os.path import join
-
 from tqdm import tqdm
-
 from computer_vision_utils.stitching import stitch_together
 from computer_vision_utils.io_helper import read_image
-
 from train.utils import read_lines_from_file
+from visualization.utils import blend_map
 
-from utils import blend_map
 
 dreyeve_root = '/majinbu/public/DREYEVE'
 dreyeve_test_seq = range(38, 74+1)
@@ -33,7 +29,7 @@ def extract_most_competitive_frames(sequences, prediction_dir):
 
     ret_list = []
 
-    print 'Selecting best frames...'
+    print('Selecting best frames...')
     for seq in tqdm(sequences):
         kld_file = join(dreyeve_root, prediction_dir, '{:02d}'.format(seq), 'metrics', 'kld.txt')
         kld_list = read_lines_from_file(kld_file)[1:]  # remove head

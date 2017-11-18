@@ -1,8 +1,16 @@
-### dr(eye)ve supplementary material
+# Predicting the Driver’s Focus of Attention: the DR(eye)VE Project
 
-a collection of resources useful for the comprehension of the paper.
+## Supplementary Material
 
-#### How was Fig.7 made?
+Collection of resources useful for the comprehension of the paper.
+
+### Model predictions showcase (on test set)
+
+A showcase of model predictions on the DR(eye)VE test set can be found here. The network learnt to reproduce the human driver focus of attention (FoA) in a variety of driving scenarios. Failure cases are also included and are shown towards the end of the video.
+
+[![prediction_showcase](https://img.youtube.com/vi/GKjzOcwoc68/0.jpg)](https://www.youtube.com/watch?v=GKjzOcwoc68)
+
+### How was Fig.7 made?
 Sec 3.1 of the paper investigates on what human fixations focus on 
 while driving, in terms of semantic classes. As explained in the paper,
 this analysis has been carried out by normalizing the fixation map
@@ -21,7 +29,6 @@ Then, from accumulated class occurrences for each threshold we build a
 histogram, that is represented by Fig.7.
 
 ![fig7](img/fig7.png "fig7")
-
 
 In this figure, by isolating the leftmost bar for each class, we obtain 
 the histogram relative to the first threshold. By isolating the second one from 
