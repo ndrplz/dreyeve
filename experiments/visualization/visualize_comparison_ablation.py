@@ -48,7 +48,7 @@ def extract_most_competitive_frames(sequences, prediction_dir):
 
         this_seq_list = [seq]*len(good_idx)
         frames_list = my_kld[good_idx, 0].tolist()
-        gap = np.square(my_kld[good_idx, 1] - comp_kld[good_idx, 1]).tolist()
+        gap = np.sum(np.square(np.stack([my_kld[good_idx, 1]]*3, axis=-1) - comp_kld[good_idx, 1:]), axis=-1).tolist()
 
         ret_list += zip(this_seq_list, frames_list, gap)
 
