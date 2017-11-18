@@ -132,4 +132,6 @@ experiments/rmdn_comparison/predictions
 experiments/rmdn_comparison/rmdn_checkpoints
 experiments/dataset_stats/variances.txt
 matlab/homography_error/*.pdf
+matlab/homography_error/*.fig
 experiments/assessment/assessment_answers.txt
+
