@@ -4,6 +4,7 @@ Some statistics utils.
 
 
 import numpy as np
+from os.path import join
 
 
 def expectation_2d(pdf):
@@ -79,3 +80,19 @@ def covariance_matrix_2d(pdf):
     # in computing the dot product, pdf has to be counted one (outside the square!)
     cov = np.dot(grid_flat.T, grid_flat * np.reshape(pdf, -1)[..., None])
     return cov
+
+
+def read_dreyeve_design(dreyeve_root):
+    """
+    Reads the whole dr(eye)ve design.
+
+    Returns
+    -------
+    ndarray
+        the dr(eye)ve design in the form (sequences, params).
+    """
+
+    with open(join(dreyeve_root, 'dr(eye)ve_design.txt')) as f:
+        dreyeve_design = np.array([l.rstrip().split('\t') for l in f.readlines()])
+
+    return dreyeve_design

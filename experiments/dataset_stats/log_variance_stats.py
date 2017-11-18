@@ -9,27 +9,10 @@ import skimage.io as io
 from os.path import join
 from glob import glob
 from tqdm import tqdm
-from dataset_stats.stats_utils import covariance_matrix_2d
-
+from stats_utils import covariance_matrix_2d, read_dreyeve_design
 
 dreyeve_root = '/majinbu/public/DREYEVE'
 output_txt = 'variances.txt'
-
-
-def read_dreyeve_design():
-    """
-    Reads the whole dr(eye)ve design.
-    
-    Returns
-    -------
-    ndarray
-        the dr(eye)ve design in the form (sequences, params).
-    """
-
-    with open(join(dreyeve_root, 'dr(eye)ve_design.txt')) as f:
-        dreyeve_design = np.array([l.rstrip().split('\t') for l in f.readlines()])
-
-    return dreyeve_design
 
 
 def write_line_on_file(line, f):
@@ -49,7 +32,7 @@ def write_line_on_file(line, f):
 
 def main():
     """ Main function """
-    dreyeve_design = read_dreyeve_design()
+    dreyeve_design = read_dreyeve_design(dreyeve_root)
 
     with open(output_txt, mode='w') as f:
         for line, seq in enumerate(dreyeve_design[:, 0]):
