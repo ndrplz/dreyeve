@@ -39,10 +39,10 @@ def extract_most_competitive_frames(sequences, prediction_dir):
         kld = np.array(kld_list, dtype=np.float32)
 
         my_kld = kld[:, [0, 8]]
-        comp_kld = kld[:, [0, 5, 6, 7]]
+        comp_kld = kld[:, [0, 6, 7]]
 
         # index of frames where we perform better than all competitors (by means of kld)
-        good_idx = list(np.where(np.all((np.tile(my_kld[:, 1:], reps=(1, 3)) < comp_kld[:, 1:]), axis=1))[0])
+        good_idx = list(np.where(np.all((np.tile(my_kld[:, 1:], reps=(1, 2)) < comp_kld[:, 1:]), axis=1))[0])
 
         this_seq_list = [seq]*len(good_idx)
         frames_list = my_kld[good_idx, 0].tolist()
