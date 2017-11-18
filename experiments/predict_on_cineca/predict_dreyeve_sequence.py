@@ -7,13 +7,13 @@ import os
 from tqdm import tqdm
 from os.path import join
 
-from models import DreyeveNet
+from train.models import DreyeveNet
 from computer_vision_utils.io_helper import read_image, normalize
 from computer_vision_utils.tensor_manipulation import resize_tensor
 from computer_vision_utils.stitching import stitch_together
 
-from utils import seg_to_colormap
-from metrics import kld_numeric, cc_numeric
+from train.utils import seg_to_colormap
+#from metrics.metrics import kld_numeric, cc_numeric
 
 
 def makedirs(dir_list):
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     assert args.seq is not None, 'Please provide a correct dreyeve sequence'
     assert args.pred_dir is not None, 'Please provide a correct pred_dir'
 
-    dreyeve_dir = 'Z:/DATA'  # local
+    dreyeve_dir = '/majinbu/public/DREYEVE/DATA'  # local
     # dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/DREYEVE/data/'  # cineca
 
     # load mean dreyeve image
