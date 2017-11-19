@@ -8,6 +8,7 @@
 
 This repository was used throughout the whole work presented in the [paper](https://arxiv.org/pdf/1705.03854.pdf) so it contains quite a large amount of code. Nonetheless, it should be quite easy to navigate into. In particular:
 
+* `docs`: project supplementary website, holding some additional information concerning the paper.
 * `dreyeve-tobii`: cpp code to acquire gaze over dreyeve sequences with Tobii EyeX.
 * `semseg`: python project to calculate semantic segmentation over all frames of a dreyeve sequence
 * [**`experiments`**](experiments)**: python project that holds stuff for experimental section**
