@@ -42,7 +42,7 @@ an awareness of the object which is only circumstantial.
 <p align="center">
  <table>
   <tr>
-  <td align="center"><a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="../img/paper_thumb.png" width="200px"/></a></td>
+  <td align="center"><a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="https://github.com/ndrplz/dreyeve/tree/master/img/paper_thumb.png" width="200px"/></a></td>
   </tr>
   <tr>
   <td><pre>  @article{palazzi2017focus,
