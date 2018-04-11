@@ -18,6 +18,10 @@ The [**`experiments`**](experiments) section is the one that probably interest t
 
 **All python code has been developed and tested with Keras 1 and using Theano as backend.**
 
+### Pre-trained weights:
+
+Pre-trained weights of the `multi-branch model` can be downloaded from [this](https://drive.google.com/open?id=1cS7VaguQCoqkZ5mHWO3zDj5mNlOY61bj) link.
+
 ---
 
 ### The code accompanies the following paper: 

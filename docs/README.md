@@ -37,3 +37,24 @@ Objects exibiting upward trends (e.g. road, vehicles, pedestrians) indicate that
 when assigned to a non-zero probability of fixation, they are likely to be
 the actual focus of the fixation point, whereas a downward trend indicates
 an awareness of the object which is only circumstantial.
+
+### Link to the paper: 
+<p align="center">
+ <table>
+  <tr>
+  <td align="center"><a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="https://github.com/ndrplz/dreyeve/tree/master/img/paper_thumb.png" width="200px"/></a></td>
+  </tr>
+  <tr>
+  <td><pre>  @article{palazzi2017focus,
+  title={Predicting the Driver's Focus of Attention: the DR(eye)VE Project},
+  author={Palazzi, Andrea and Abati, Davide and Calderara, Simone and Solera, Francesco and Cucchiara, Rita},
+  journal={arXiv preprint arXiv:1705.03854},
+  year={2017}
+  }</pre></td>
+  </tr>
+</table> 
+</p>
+
+### Link to the DR(eye)VE Dataset
+
+The DR(eye)VE dataset, containing 555'000 frames (approx. 6 hours) annotated with human driver gaze in different driving scenarios, can be freely downloaded at the following link: http://imagelab.ing.unimore.it/dreyeve
