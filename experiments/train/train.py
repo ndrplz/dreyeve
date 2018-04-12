@@ -111,4 +111,4 @@ def train_seg_branch():
 
 # training entry point
 if __name__ == '__main__':
-    fine_tuning()
+    train_image_branch()

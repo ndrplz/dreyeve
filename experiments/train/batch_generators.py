@@ -8,6 +8,7 @@ from time import time
 from config import dreyeve_dir, frame_size_before_crop, simo_mode, total_frames_each_run, force_sample_steering
 from config import dreyeve_train_seq, dreyeve_test_seq
 from config import train_frame_range, val_frame_range, test_frame_range
+from config import crop_type
 from utils import palette, read_lines_from_file
 
 from computer_vision_utils.io_helper import read_image, normalize
@@ -51,9 +52,16 @@ def sample_signature(sequences, allowed_frames, image_size, allow_mirror):
     start = np.random.choice(range(0, total_frames_each_run), p=p)
 
     # get random crop
-    hc1 = np.random.randint(0, h_before_crop - h_c)
+    if crop_type == 'central':
+        hc1 = h_before_crop // 4
+        wc1 = w_before_crop // 4
+    elif crop_type == 'random':
+        hc1 = np.random.randint(0, h_before_crop - h_c)
+        wc1 = np.random.randint(0, w_before_crop - w_c)
+    else:
+        raise ValueError
+    
     hc2 = hc1 + h_c
-    wc1 = np.random.randint(0, w_before_crop - w_c)
     wc2 = wc1 + w_c
 
     do_mirror = choice([True, False]) if allow_mirror else False
