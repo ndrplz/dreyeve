@@ -5,6 +5,7 @@ from keras.callbacks import ReduceLROnPlateau, CSVLogger, Callback
 from os.path import join, exists
 
 from config import frames_per_seq, h, w, log_dir, callback_batchsize
+from config import ckp_dir, prd_dir
 from batch_generators import dreyeve_I_batch, dreyeve_OF_batch, dreyeve_SEG_batch, dreyeve_batch
 from utils import seg_to_colormap, get_branch_from_experiment_id
 
@@ -22,6 +23,7 @@ class ModelLoader(Callback):
     :param seg_h5: path of the .h5 file to load for the segmentation branch.
     :param all_h5: path of the .h5 file to load for the whole DreyeveNet.
     """
+
     def __init__(self, experiment_id, image_h5=None, flow_h5=None, seg_h5=None, all_h5=None):
 
         super(ModelLoader, self).__init__()
@@ -66,7 +68,7 @@ class Checkpointer(Callback):
         super(Checkpointer, self).__init__()
 
         # create output directories if not existent
-        out_dir_path = join('checkpoints', experiment_id)
+        out_dir_path = join(ckp_dir, experiment_id)
         if not os.path.exists(out_dir_path):
             os.makedirs(out_dir_path)
 
@@ -91,7 +93,7 @@ class PredictionCallback(Callback):
         self.branch = get_branch_from_experiment_id(experiment_id)
 
         # create output directories if not existent
-        out_dir_path = join('predictions', experiment_id)
+        out_dir_path = join(prd_dir, experiment_id)
         if not os.path.exists(out_dir_path):
             os.makedirs(out_dir_path)
 

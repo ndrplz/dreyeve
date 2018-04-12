@@ -7,7 +7,10 @@ dreyeve_test_seq = range(38, 74+1)
 n_sequences = 74
 total_frames_each_run = 7500
 
-log_dir = 'logs'
+# output directories
+log_dir = '/home/aba/majinbu_home/dreyeve/logs'
+ckp_dir = '/home/aba/majinbu_home/dreyeve/checkpoints'
+prd_dir = '/home/aba/majinbu_home/dreyeve/predictions'
 
 # --- TRAIN --- #
 batchsize = 16
