@@ -33,6 +33,7 @@ def fine_tuning():
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=nb_epochs,
+                        nb_worker=4,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -58,6 +59,7 @@ def train_image_branch():
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=nb_epochs,
+                        nb_worker=4,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -82,6 +84,7 @@ def train_flow_branch():
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=nb_epochs,
+                        nb_worker=4,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
@@ -107,6 +110,7 @@ def train_seg_branch():
                         nb_val_samples=val_samples_per_epoch,
                         samples_per_epoch=train_samples_per_epoch,
                         nb_epoch=nb_epochs,
+                        nb_worker=4,
                         callbacks=get_callbacks(experiment_id=experiment_id))
 
 
