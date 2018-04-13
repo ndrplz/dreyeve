@@ -1,3 +1,4 @@
+import argparse
 import uuid
 
 from config import batchsize, frames_per_seq, h, w, opt, train_samples_per_epoch, val_samples_per_epoch, nb_epochs
@@ -111,4 +112,18 @@ def train_seg_branch():
 
 # training entry point
 if __name__ == '__main__':
-    train_image_branch()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--which_branch")
+
+    args = parser.parse_args()
+    assert args.which_branch in ['finetuning', 'image', 'flow', 'seg']
+
+    if args.which_branch == 'image':
+        train_image_branch()
+    elif args.which_branch == 'flow':
+        train_flow_branch()
+    elif args.which_branch == 'seg':
+        train_seg_branch()
+    else:
+        fine_tuning()
