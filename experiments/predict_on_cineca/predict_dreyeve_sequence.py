@@ -13,7 +13,7 @@ from computer_vision_utils.tensor_manipulation import resize_tensor
 from computer_vision_utils.stitching import stitch_together
 
 from train.utils import seg_to_colormap
-#from metrics.metrics import kld_numeric, cc_numeric
+from metrics.metrics import kld_numeric, cc_numeric
 
 
 def makedirs(dir_list):
@@ -91,18 +91,19 @@ def load_dreyeve_sample(sequence_dir, sample, mean_dreyeve_image, frames_per_seq
 if __name__ == '__main__':
 
     frames_per_seq, h, w = 16, 448, 448
-    verbose = True
+    verbose = False
 
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seq")
-    parser.add_argument("--pred_dir")
+    parser.add_argument("--seq", type=int)
+    parser.add_argument("--pred_dir", type=str)
     args = parser.parse_args()
 
     assert args.seq is not None, 'Please provide a correct dreyeve sequence'
     assert args.pred_dir is not None, 'Please provide a correct pred_dir'
 
-    dreyeve_dir = '/majinbu/public/DREYEVE/DATA'  # local
+    dreyeve_dir = '/tmp/DREYEVE_DATA'  # aimagelab-local
+    #dreyeve_dir = '/nas/majinbu/DREYEVE/DATA'  # aimagelab-majinbu
     # dreyeve_dir = '/gpfs/work/IscrC_DeepVD/dabati/DREYEVE/data/'  # cineca
 
     # load mean dreyeve image
@@ -112,7 +113,7 @@ if __name__ == '__main__':
     # get the models
     dreyevenet_model = DreyeveNet(frames_per_seq=frames_per_seq, h=h, w=w)
     dreyevenet_model.compile(optimizer='adam', loss='kld')  # do we need this?
-    dreyevenet_model.load_weights('dreyevenet_model.h5')  # load weights
+    dreyevenet_model.load_weights('dreyevenet_model_central_crop.h5')  # load weights
 
     image_branch = [l for l in dreyevenet_model.layers if l.name == 'image_saliency_branch'][0]
     flow_branch = [l for l in dreyevenet_model.layers if l.name == 'optical_flow_saliency_branch'][0]
@@ -127,8 +128,11 @@ if __name__ == '__main__':
 
     sequence_dir = join(dreyeve_dir, '{:02d}'.format(int(args.seq)))
     for sample in tqdm(range(15, 7500 - 1)):
+        from time import time
+        t = time()
         X, GT = load_dreyeve_sample(sequence_dir=sequence_dir, sample=sample, mean_dreyeve_image=mean_dreyeve_image,
                                 frames_per_seq=frames_per_seq, h=h, w=w)
+        print(time() - t)
         GT_sal, GT_fix = GT
 
         Y_dreyevenet = dreyevenet_model.predict(X)[0]  # get only [fine_out][remove batch]
@@ -185,6 +189,3 @@ if __name__ == '__main__':
             cv2.imshow('prediction', stitch_together([x_stitch, y_stitch, y_tot], layout=(1, 3),
                                                      resize_dim=(500, 1500)))
             cv2.waitKey(1)
-
-
-
