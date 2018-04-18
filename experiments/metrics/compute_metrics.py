@@ -428,6 +428,68 @@ class AblationStudy:
             f.write(('{},'*len(avg)).format(*avg))
 
 
+def compute_metrics_for_central_crop(sequences):
+    """
+    Function to compute metrics out of the new model trained with central crop only (2018).
+
+    :param sequences: A list of sequences to consider.
+    """
+
+    # some variables
+    gt_h, gt_w = 1080, 1920
+
+    pred_dir = '/majinbu/public/DREYEVE/PREDICTIONS_CENTRAL_CROP'
+    dreyeve_dir = '/majinbu/public/DREYEVE/DATA'
+
+    ig_baseline = read_image(join(dreyeve_dir, 'dreyeve_mean_train_gt_fix.png'), channels_first=False, color=False,
+                                  resize_dim=(gt_h, gt_w))
+
+    for seq in sequences:
+        print('Processing sequence {}'.format(seq))
+
+        # prediction dirs
+        dir_pred_dreyevenet = join(pred_dir, '{:02d}'.format(seq), 'dreyeveNet')
+        dir_pred_image = join(pred_dir, '{:02d}'.format(seq), 'image_branch')
+        dir_pred_flow = join(pred_dir, '{:02d}'.format(seq), 'flow_branch')
+        dir_pred_seg = join(pred_dir, '{:02d}'.format(seq), 'semseg_branch')
+
+        # gt dirs
+        dir_gt_sal = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency')
+        dir_gt_fix = join(dreyeve_dir, '{:02d}'.format(seq), 'saliency_fix')
+
+        print('Computing metrics...')
+        metric_saver = MetricSaver(pred_dir, seq, model='new')
+        ablation = AblationStudy(pred_dir, seq)
+
+        for fr in tqdm(xrange(15, 7500 - 1, 5)):
+            # load predictions
+            p_dreyeve = np.squeeze(np.load(join(dir_pred_dreyevenet, '{:06}.npz'.format(fr)))['arr_0'])
+            p_image = np.squeeze(np.load(join(dir_pred_image, '{:06}.npz'.format(fr)))['arr_0'])
+            p_flow = np.squeeze(np.load(join(dir_pred_flow, '{:06}.npz'.format(fr)))['arr_0'])
+            p_seg = np.squeeze(np.load(join(dir_pred_seg, '{:06}.npz'.format(fr)))['arr_0'])
+
+            p_dreyeve = cv2.resize(p_dreyeve, dsize=(gt_h, gt_w)[::-1])
+            p_image = cv2.resize(p_image, dsize=(gt_h, gt_w)[::-1])
+            p_flow = cv2.resize(p_flow, dsize=(gt_h, gt_w)[::-1])
+            p_seg = cv2.resize(p_seg, dsize=(gt_h, gt_w)[::-1])
+
+            # load gts
+            gt_sal = read_image(join(dir_gt_sal, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+            gt_fix = read_image(join(dir_gt_fix, '{:06d}.png'.format(fr+1)), channels_first=False,
+                                color=False)
+
+            # feed the saver
+            metric_saver.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix],
+                              ig_baseline=ig_baseline)
+            ablation.feed(fr, predictions=[p_dreyeve, p_image, p_flow, p_seg], groundtruth=[gt_sal, gt_fix],
+                          ig_baseline=ig_baseline)
+
+        # save mean values
+        metric_saver.save_mean_metrics()
+        ablation.save_mean_metrics()
+
+
 def compute_metrics_for_new_model(sequences):
     """
     Function to compute metrics out of the new model (2017).
@@ -902,7 +964,7 @@ if __name__ == '__main__':
     stop_seq = 74 if args.stop is None else int(args.stop)
     sequences = range(start_seq, stop_seq + 1)
 
-    compute_metrics_for_rmdn_model(sequences)
+    compute_metrics_for_central_crop(sequences)
 
 
 """
