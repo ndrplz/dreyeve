@@ -47,132 +47,211 @@ def translate(x, pixels, side):
     return xt
 
 
-def load_dreyeve_cropped_samples(sequence_dir, sample, mean_dreyeve_image, frames_per_seq=16, h=448, w=448):
-    """
-    TODO.
+class SequenceLoader:
 
-    :param sequence_dir: string, sequence directory (e.g. 'Z:/DATA/04/').
-    :param sample: int, sample to load in (15, 7499). N.B. this is the sample where prediction occurs!
-    :param mean_dreyeve_image: mean dreyeve image, subtracted to each frame.
-    :param frames_per_seq: number of temporal frames for each sample
-    :param h: h
-    :param w: w
-    :return: a dreyeve_sample like I, OF, SEG
-    """
+    def __init__(self, sequence_dir, mean_dreyeve_image, frames_per_seq=16, h=448, w=448):
 
-    h_c = h_s = h // 4
-    w_c = w_s = h // 4
+        self.sequence_dir = sequence_dir
+        self.mean_dreyeve_image = mean_dreyeve_image
+        self.frames_per_seq = frames_per_seq
+        self.h = h
+        self.w = w
 
-    I_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    I_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    I_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.h_c = self.h_s = h // 4
+        self.w_c = self.w_s = h // 4
 
-    Il_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    Il_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    Il_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.fr = 0  # frame counter
 
-    Ir_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    Ir_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    Ir_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.I_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.I_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.I_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    OF_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    OF_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    OF_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.Il_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.Il_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.Il_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    OFl_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    OFl_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    OFl_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.Ir_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.Ir_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.Ir_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    OFr_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
-    OFr_s = np.zeros(shape=(1, 3, frames_per_seq, h_s, w_s), dtype='float32')
-    OFr_c = np.zeros(shape=(1, 3, frames_per_seq, h_c, w_c), dtype='float32')
+        self.OF_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.OF_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.OF_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    SEG_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
-    SEG_s = np.zeros(shape=(1, 19, frames_per_seq, h_s, w_s), dtype='float32')
-    SEG_c = np.zeros(shape=(1, 19, frames_per_seq, h_c, w_c), dtype='float32')
+        self.OFl_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.OFl_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.OFl_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    SEGl_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
-    SEGl_s = np.zeros(shape=(1, 19, frames_per_seq, h_s, w_s), dtype='float32')
-    SEGl_c = np.zeros(shape=(1, 19, frames_per_seq, h_c, w_c), dtype='float32')
+        self.OFr_ff = np.zeros(shape=(1, 3, 1, h, w), dtype='float32')
+        self.OFr_s = np.zeros(shape=(1, 3, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.OFr_c = np.zeros(shape=(1, 3, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    SEGr_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
-    SEGr_s = np.zeros(shape=(1, 19, frames_per_seq, h_s, w_s), dtype='float32')
-    SEGr_c = np.zeros(shape=(1, 19, frames_per_seq, h_c, w_c), dtype='float32')
+        self.SEG_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
+        self.SEG_s = np.zeros(shape=(1, 19, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.SEG_c = np.zeros(shape=(1, 19, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    Y_sal = np.zeros(shape=(1, 1, h, w), dtype='float32')
-    Y_fix = np.zeros(shape=(1, 1, h, w), dtype='float32')
+        self.SEGl_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
+        self.SEGl_s = np.zeros(shape=(1, 19, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.SEGl_c = np.zeros(shape=(1, 19, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    Yl_sal = np.zeros(shape=(1, 1, h, w), dtype='float32')
-    Yl_fix = np.zeros(shape=(1, 1, h, w), dtype='float32')
+        self.SEGr_ff = np.zeros(shape=(1, 19, 1, h, w), dtype='float32')
+        self.SEGr_s = np.zeros(shape=(1, 19, frames_per_seq, self.h_s, self.w_s), dtype='float32')
+        self.SEGr_c = np.zeros(shape=(1, 19, frames_per_seq, self.h_c, self.w_c), dtype='float32')
 
-    Yr_sal = np.zeros(shape=(1, 1, h, w), dtype='float32')
-    Yr_fix = np.zeros(shape=(1, 1, h, w), dtype='float32')
+        self.Y_sal = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
+        self.Y_fix = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
 
-    for fr in xrange(0, frames_per_seq):
-        offset = sample - frames_per_seq + 1 + fr   # tricky
+        self.Yl_sal = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
+        self.Yl_fix = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
+
+        self.Yr_sal = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
+        self.Yr_fix = np.zeros(shape=(1, 1, self.h, self.w), dtype='float32')
+
+        self.load_first()
+
+    def load_first(self):
+
+        for fr in xrange(0, self.frames_per_seq):
+
+            self.fr = fr
+
+            # read image
+            x = read_image(join(self.sequence_dir, 'frames', '{:06d}.jpg'.format(fr)), channels_first=True) \
+                - self.mean_dreyeve_image
+            xl = translate(x, pixels=500, side='left')
+            xr = translate(x, pixels=500, side='right')
+            self.I_s[0, :, fr, :, :] = resize_tensor(x, new_size=(self.h_s, self.w_s))
+            self.Il_s[0, :, fr, :, :] = resize_tensor(xl, new_size=(self.h_s, self.w_s))
+            self.Ir_s[0, :, fr, :, :] = resize_tensor(xr, new_size=(self.h_s, self.w_s))
+
+            # read of
+            of = read_image(join(self.sequence_dir, 'optical_flow', '{:06d}.png'.format(fr + 1)),
+                            channels_first=True, resize_dim=(h, w))
+            of -= np.mean(of, axis=(1, 2), keepdims=True)  # remove mean
+            ofl = translate(of, pixels=500, side='left')
+            ofr = translate(of, pixels=500, side='right')
+            self.OF_s[0, :, fr, :, :] = resize_tensor(of, new_size=(self.h_s, self.w_s))
+            self.OFl_s[0, :, fr, :, :] = resize_tensor(ofl, new_size=(self.h_s, self.w_s))
+            self.OFr_s[0, :, fr, :, :] = resize_tensor(ofr, new_size=(self.h_s, self.w_s))
+
+            # read semseg
+            seg = resize_tensor(np.load(join(self.sequence_dir, 'semseg', '{:06d}.npz'.format(fr)))['arr_0'][0],
+                                new_size=(h, w))
+            segl = translate(seg, pixels=500, side='left')
+            segr = translate(seg, pixels=500, side='right')
+
+            self.SEG_s[0, :, fr, :, :] = resize_tensor(seg, new_size=(self.h_s, self.w_s))
+            self.SEGl_s[0, :, fr, :, :] = resize_tensor(segl, new_size=(self.h_s, self.w_s))
+            self.SEGr_s[0, :, fr, :, :] = resize_tensor(segr, new_size=(self.h_s, self.w_s))
+
+        self.I_ff[0, :, 0, :, :] = resize_tensor(x, new_size=(self.h, self.w))
+        self.Il_ff[0, :, 0, :, :] = resize_tensor(xl, new_size=(self.h, self.w))
+        self.Ir_ff[0, :, 0, :, :] = resize_tensor(xr, new_size=(self.h, self.w))
+
+        self.OF_ff[0, :, 0, :, :] = resize_tensor(of, new_size=(self.h, self.w))
+        self.OFl_ff[0, :, 0, :, :] = resize_tensor(ofl, new_size=(self.h, self.w))
+        self.OFr_ff[0, :, 0, :, :] = resize_tensor(ofr, new_size=(self.h, self.w))
+
+        self.SEG_ff[0, :, 0, :, :] = resize_tensor(seg, new_size=(self.h, self.w))
+        self.SEGl_ff[0, :, 0, :, :] = resize_tensor(segl, new_size=(self.h, self.w))
+        self.SEGr_ff[0, :, 0, :, :] = resize_tensor(segr, new_size=(self.h, self.w))
+
+        y_sal = read_image(join(self.sequence_dir, 'saliency', '{:06d}.png'.format(fr)), channels_first=False,
+                           color=False)
+        yl_sal = translate(y_sal, pixels=500, side='left')
+        yr_sal = translate(y_sal, pixels=500, side='right')
+        self.Y_sal[0, 0] = resize_tensor(y_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yl_sal[0, 0] = resize_tensor(yl_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yr_sal[0, 0] = resize_tensor(yr_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
+
+        y_fix = read_image(join(self.sequence_dir, 'saliency_fix', '{:06d}.png'.format(fr)), channels_first=False,
+                           color=False)
+        yl_fix = translate(y_fix, pixels=500, side='left')
+        yr_fix = translate(y_fix, pixels=500, side='right')
+        self.Y_fix[0, 0] = resize_tensor(y_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yl_fix[0, 0] = resize_tensor(yl_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yr_fix[0, 0] = resize_tensor(yr_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
+
+    def get(self):
+
+        X = [x.copy() for x in [self.I_ff, self.I_s, self.I_c, self.OF_ff, self.OF_s, self.OF_c, self.SEG_ff, self.SEG_s, self.SEG_c]]
+        Xl = [x.copy() for x in [self.Il_ff, self.Il_s, self.Il_c, self.OFl_ff, self.OFl_s, self.OFl_c, self.SEGl_ff, self.SEGl_s, self.SEGl_c]]
+        Xr = [x.copy() for x in [self.Ir_ff, self.Ir_s, self.Ir_c, self.OFr_ff, self.OFr_s, self.OFr_c, self.SEGr_ff, self.SEGr_s, self.SEGr_c]]
+        GT = [x.copy() for x in [self.Y_sal, self.Y_fix]]
+        GTl = [x.copy() for x in [self.Yl_sal, self.Yl_fix]]
+        GTr = [x.copy() for x in [self.Yr_sal, self.Yr_fix]]
+
+        return X, Xl, Xr, GT, GTl, GTr
+
+    def roll(self):
+
+        self.fr += 1
+
+        self.I_s, self.I_c, self.OF_s, self.OF_c, self.SEG_s, self.SEG_c, \
+        self.Il_s, self.Il_c, self.OFl_s, self.OFl_c, self.SEGl_s, self.SEGl_c, \
+        self.Ir_s, self.Ir_c, self.OFr_s, self.OFr_c, self.SEGr_s, self.SEGr_c = [
+            np.roll(x, -1, axis=2) for x in
+            [self.I_s, self.I_c, self.OF_s, self.OF_c, self.SEG_s, self.SEG_c,
+            self.Il_s, self.Il_c, self.OFl_s, self.OFl_c, self.SEGl_s, self.SEGl_c,
+            self.Ir_s, self.Ir_c, self.OFr_s, self.OFr_c, self.SEGr_s, self.SEGr_c]]
 
         # read image
-        x = read_image(join(sequence_dir, 'frames', '{:06d}.jpg'.format(offset)), channels_first=True) \
-            - mean_dreyeve_image
+        x = read_image(join(self.sequence_dir, 'frames', '{:06d}.jpg'.format(self.fr)), channels_first=True) \
+            - self.mean_dreyeve_image
         xl = translate(x, pixels=500, side='left')
         xr = translate(x, pixels=500, side='right')
-        I_s[0, :, fr, :, :] = resize_tensor(x, new_size=(h_s, w_s))
-        Il_s[0, :, fr, :, :] = resize_tensor(xl, new_size=(h_s, w_s))
-        Ir_s[0, :, fr, :, :] = resize_tensor(xr, new_size=(h_s, w_s))
+        self.I_s[0, :, -1, :, :] = resize_tensor(x, new_size=(self.h_s, self.w_s))
+        self.Il_s[0, :, -1, :, :] = resize_tensor(xl, new_size=(self.h_s, self.w_s))
+        self.Ir_s[0, :, -1, :, :] = resize_tensor(xr, new_size=(self.h_s, self.w_s))
 
         # read of
-        of = read_image(join(sequence_dir, 'optical_flow', '{:06d}.png'.format(offset + 1)),
+        of = read_image(join(self.sequence_dir, 'optical_flow', '{:06d}.png'.format(self.fr + 1)),
                         channels_first=True, resize_dim=(h, w))
         of -= np.mean(of, axis=(1, 2), keepdims=True)  # remove mean
         ofl = translate(of, pixels=500, side='left')
         ofr = translate(of, pixels=500, side='right')
-        OF_s[0, :, fr, :, :] = resize_tensor(of, new_size=(h_s, w_s))
-        OFl_s[0, :, fr, :, :] = resize_tensor(ofl, new_size=(h_s, w_s))
-        OFr_s[0, :, fr, :, :] = resize_tensor(ofr, new_size=(h_s, w_s))
+        self.OF_s[0, :, -1, :, :] = resize_tensor(of, new_size=(self.h_s, self.w_s))
+        self.OFl_s[0, :, -1, :, :] = resize_tensor(ofl, new_size=(self.h_s, self.w_s))
+        self.OFr_s[0, :, -1, :, :] = resize_tensor(ofr, new_size=(self.h_s, self.w_s))
 
         # read semseg
-        seg = resize_tensor(np.load(join(sequence_dir, 'semseg', '{:06d}.npz'.format(offset)))['arr_0'][0],
+        seg = resize_tensor(np.load(join(self.sequence_dir, 'semseg', '{:06d}.npz'.format(self.fr)))['arr_0'][0],
                             new_size=(h, w))
         segl = translate(seg, pixels=500, side='left')
         segr = translate(seg, pixels=500, side='right')
 
-        SEG_s[0, :, fr, :, :] = resize_tensor(seg, new_size=(h_s, w_s))
-        SEGl_s[0, :, fr, :, :] = resize_tensor(segl, new_size=(h_s, w_s))
-        SEGr_s[0, :, fr, :, :] = resize_tensor(segr, new_size=(h_s, w_s))
+        self.SEG_s[0, :, -1, :, :] = resize_tensor(seg, new_size=(self.h_s, self.w_s))
+        self.SEGl_s[0, :, -1, :, :] = resize_tensor(segl, new_size=(self.h_s, self.w_s))
+        self.SEGr_s[0, :, -1, :, :] = resize_tensor(segr, new_size=(self.h_s, self.w_s))
 
-    I_ff[0, :, 0, :, :] = resize_tensor(x, new_size=(h, w))
-    Il_ff[0, :, 0, :, :] = resize_tensor(xl, new_size=(h, w))
-    Ir_ff[0, :, 0, :, :] = resize_tensor(xr, new_size=(h, w))
+        self.I_ff[0, :, 0, :, :] = resize_tensor(x, new_size=(self.h, self.w))
+        self.Il_ff[0, :, 0, :, :] = resize_tensor(xl, new_size=(self.h, self.w))
+        self.Ir_ff[0, :, 0, :, :] = resize_tensor(xr, new_size=(self.h, self.w))
 
-    OF_ff[0, :, 0, :, :] = resize_tensor(of, new_size=(h, w))
-    OFl_ff[0, :, 0, :, :] = resize_tensor(ofl, new_size=(h, w))
-    OFr_ff[0, :, 0, :, :] = resize_tensor(ofr, new_size=(h, w))
+        self.OF_ff[0, :, 0, :, :] = resize_tensor(of, new_size=(self.h, self.w))
+        self.OFl_ff[0, :, 0, :, :] = resize_tensor(ofl, new_size=(self.h, self.w))
+        self.OFr_ff[0, :, 0, :, :] = resize_tensor(ofr, new_size=(self.h, self.w))
 
-    SEG_ff[0, :, 0, :, :] = resize_tensor(seg, new_size=(h, w))
-    SEGl_ff[0, :, 0, :, :] = resize_tensor(segl, new_size=(h, w))
-    SEGr_ff[0, :, 0, :, :] = resize_tensor(segr, new_size=(h, w))
+        self.SEG_ff[0, :, 0, :, :] = resize_tensor(seg, new_size=(self.h, self.w))
+        self.SEGl_ff[0, :, 0, :, :] = resize_tensor(segl, new_size=(self.h, self.w))
+        self.SEGr_ff[0, :, 0, :, :] = resize_tensor(segr, new_size=(self.h, self.w))
 
-    y_sal = read_image(join(sequence_dir, 'saliency', '{:06d}.png'.format(sample)), channels_first=False, color=False)
-    yl_sal = translate(y_sal, pixels=500, side='left')
-    yr_sal = translate(y_sal, pixels=500, side='right')
-    Y_sal[0, 0] = resize_tensor(y_sal[np.newaxis, ...], new_size=(h, w))[0]
-    Yl_sal[0, 0] = resize_tensor(yl_sal[np.newaxis, ...], new_size=(h, w))[0]
-    Yr_sal[0, 0] = resize_tensor(yr_sal[np.newaxis, ...], new_size=(h, w))[0]
+        y_sal = read_image(join(self.sequence_dir, 'saliency', '{:06d}.png'.format(self.fr)), channels_first=False,
+                           color=False)
+        yl_sal = translate(y_sal, pixels=500, side='left')
+        yr_sal = translate(y_sal, pixels=500, side='right')
+        self.Y_sal[0, 0] = resize_tensor(y_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yl_sal[0, 0] = resize_tensor(yl_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yr_sal[0, 0] = resize_tensor(yr_sal[np.newaxis, ...], new_size=(self.h, self.w))[0]
 
-    y_fix = read_image(join(sequence_dir, 'saliency_fix', '{:06d}.png'.format(sample)), channels_first=False, color=False)
-    yl_fix = translate(y_fix, pixels=500, side='left')
-    yr_fix = translate(y_fix, pixels=500, side='right')
-    Y_fix[0, 0] = resize_tensor(y_fix[np.newaxis, ...], new_size=(h, w))[0]
-    Yl_fix[0, 0] = resize_tensor(yl_fix[np.newaxis, ...], new_size=(h, w))[0]
-    Yr_fix[0, 0] = resize_tensor(yr_fix[np.newaxis, ...], new_size=(h, w))[0]
+        y_fix = read_image(join(self.sequence_dir, 'saliency_fix', '{:06d}.png'.format(self.fr)), channels_first=False,
+                           color=False)
+        yl_fix = translate(y_fix, pixels=500, side='left')
+        yr_fix = translate(y_fix, pixels=500, side='right')
+        self.Y_fix[0, 0] = resize_tensor(y_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yl_fix[0, 0] = resize_tensor(yl_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
+        self.Yr_fix[0, 0] = resize_tensor(yr_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
 
-    X = [I_ff, I_s, I_c, OF_ff, OF_s, OF_c, SEG_ff, SEG_s, SEG_c]
-    Xl = [Il_ff, Il_s, Il_c, OFl_ff, OFl_s, OFl_c, SEGl_ff, SEGl_s, SEGl_c]
-    Xr = [Ir_ff, Ir_s, Ir_c, OFr_ff, OFr_s, OFr_c, SEGr_ff, SEGr_s, SEGr_c]
-    GT = Y_sal, Y_fix
-    GTl = Yl_sal, Yl_fix
-    GTr = Yr_sal, Yr_fix
-    return X, Xl, Xr, GT, GTl, GTr
 
 
 import matplotlib.cm as cm
@@ -238,13 +317,15 @@ if __name__ == '__main__':
     makedirs([image_pred_dir])
 
     sequence_dir = join(dreyeve_dir, '{:02d}'.format(int(args.seq)))
+
+    # set up sequence loader
+    loader = SequenceLoader(sequence_dir, mean_dreyeve_image)
+
     for sample in tqdm(range(15, 7500 - 1)):
-        X, Xl, Xr, GT, GTl, GTr = load_dreyeve_cropped_samples(sequence_dir=sequence_dir,
-                                                               sample=sample,
-                                                               mean_dreyeve_image=mean_dreyeve_image,
-                                                               frames_per_seq=frames_per_seq,
-                                                               h=h,
-                                                               w=w)
+
+        X, Xl, Xr, GT, GTl, GTr = loader.get()
+        loader.roll()
+
         GT_sal, GT_fix = GT
         GTl_sal, GTl_fix = GTl
         GTr_sal, GTr_fix = GTr
