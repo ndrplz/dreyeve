@@ -174,12 +174,12 @@ class SequenceLoader:
 
     def get(self):
 
-        X = [x.copy() for x in [self.I_ff, self.I_s, self.I_c, self.OF_ff, self.OF_s, self.OF_c, self.SEG_ff, self.SEG_s, self.SEG_c]]
-        Xl = [x.copy() for x in [self.Il_ff, self.Il_s, self.Il_c, self.OFl_ff, self.OFl_s, self.OFl_c, self.SEGl_ff, self.SEGl_s, self.SEGl_c]]
-        Xr = [x.copy() for x in [self.Ir_ff, self.Ir_s, self.Ir_c, self.OFr_ff, self.OFr_s, self.OFr_c, self.SEGr_ff, self.SEGr_s, self.SEGr_c]]
-        GT = [x.copy() for x in [self.Y_sal, self.Y_fix]]
-        GTl = [x.copy() for x in [self.Yl_sal, self.Yl_fix]]
-        GTr = [x.copy() for x in [self.Yr_sal, self.Yr_fix]]
+        X = [self.I_ff, self.I_s, self.I_c, self.OF_ff, self.OF_s, self.OF_c, self.SEG_ff, self.SEG_s, self.SEG_c]
+        Xl = [self.Il_ff, self.Il_s, self.Il_c, self.OFl_ff, self.OFl_s, self.OFl_c, self.SEGl_ff, self.SEGl_s, self.SEGl_c]
+        Xr = [self.Ir_ff, self.Ir_s, self.Ir_c, self.OFr_ff, self.OFr_s, self.OFr_c, self.SEGr_ff, self.SEGr_s, self.SEGr_c]
+        GT = [self.Y_sal, self.Y_fix]
+        GTl = [self.Yl_sal, self.Yl_fix]
+        GTr = [self.Yr_sal, self.Yr_fix]
 
         return X, Xl, Xr, GT, GTl, GTr
 
@@ -253,7 +253,6 @@ class SequenceLoader:
         self.Yr_fix[0, 0] = resize_tensor(yr_fix[np.newaxis, ...], new_size=(self.h, self.w))[0]
 
 
-
 import matplotlib.cm as cm
 cm = cm.get_cmap('jet')
 
@@ -321,39 +320,44 @@ if __name__ == '__main__':
     # set up sequence loader
     loader = SequenceLoader(sequence_dir, mean_dreyeve_image)
 
+    # open metric files
+    kld_file = open(join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'kld.txt'), 'w')
+    cc_file = open(join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'cc.txt'), 'w')
+
     for sample in tqdm(range(15, 7500 - 1)):
 
         X, Xl, Xr, GT, GTl, GTr = loader.get()
-        loader.roll()
 
         GT_sal, GT_fix = GT
         GTl_sal, GTl_fix = GTl
         GTr_sal, GTr_fix = GTr
 
-        Y = dreyevenet_model.predict(X)[0]
-        Yl = dreyevenet_model.predict(Xl)[0]
-        Yr = dreyevenet_model.predict(Xr)[0]
+        # optimise
+        X_total = [np.concatenate((x, xl, xr), axis=0) for x, xl, xr in zip(X, Xl, Xr)]
+        Y, Yl, Yr = np.array_split(dreyevenet_model.predict(X_total)[0], 3, axis=0)
 
         # save model output
         save_blendmaps(join(image_pred_dir, '{:06d}.jpeg'.format(sample)),
                        (X[0], Xl[0], Xr[0], Y, Yl, Yr, GT_fix, GTl_fix, GTr_fix))
 
         # save some metrics
-        with open(join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'kld.txt'), 'a') as metric_file:
-            metric_file.write('{},{},{},{},{}\n'.format(sample,
-                                                        kld_numeric(GT_sal, Y),
-                                                        kld_numeric(GT_fix, Y),
-                                                        kld_numeric(GTl_sal, Yl),
-                                                        kld_numeric(GTl_fix, Yl),
-                                                        kld_numeric(GTr_sal, Yr),
-                                                        kld_numeric(GTr_fix, Yr)
-                                                        ))
-        with open(join(args.pred_dir, '{:02d}'.format(int(args.seq)), 'cc.txt'), 'a') as metric_file:
-            metric_file.write('{},{},{},{},{}\n'.format(sample,
-                                                        cc_numeric(GT_sal, Y),
-                                                        cc_numeric(GT_fix, Y),
-                                                        cc_numeric(GTl_sal, Yl),
-                                                        cc_numeric(GTl_fix, Yl),
-                                                        cc_numeric(GTr_sal, Yr),
-                                                        cc_numeric(GTr_fix, Yr)
-                                                        ))
+        kld_file.write('{},{},{},{},{},{},{}\n'.format(sample,
+                                                       kld_numeric(GT_sal, Y),
+                                                       kld_numeric(GT_fix, Y),
+                                                       kld_numeric(GTl_sal, Yl),
+                                                       kld_numeric(GTl_fix, Yl),
+                                                       kld_numeric(GTr_sal, Yr),
+                                                       kld_numeric(GTr_fix, Yr)
+                                                       ))
+        cc_file.write('{},{},{},{},{},{},{}\n'.format(sample,
+                                                      cc_numeric(GT_sal, Y),
+                                                      cc_numeric(GT_fix, Y),
+                                                      cc_numeric(GTl_sal, Yl),
+                                                      cc_numeric(GTl_fix, Yl),
+                                                      cc_numeric(GTr_sal, Yr),
+                                                      cc_numeric(GTr_fix, Yr)
+                                                      ))
+        loader.roll()
+
+    kld_file.close()
+    cc_file.close()
