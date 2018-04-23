@@ -14,7 +14,7 @@ if __name__ == '__main__':
     # do not change these
     sequences_train = xrange(1, 38)
     sequences_test = xrange(38, 74 + 1)
-    predictions_dir = 'Z:/PREDICTIONS_wang2015saliency'
+    predictions_dir = '/majinbu/public/DREYEVE/PREDICTIONS_CENTRAL_CROP'
 
     # change these
     metrics_to_merge = ['metrics/kld_mean.txt', 'metrics/cc_mean.txt', 'metrics/ig_mean.txt']

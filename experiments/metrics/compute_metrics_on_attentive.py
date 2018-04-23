@@ -8,14 +8,14 @@ if __name__ == '__main__':
 
     # read file containing manually annotated subsequences
     subsequences = []
-    subseq_file = '//quesada/f/DREYEVE/subsequences.txt'
+    subseq_file = '/majinbu/public/DREYEVE/subsequences.txt'
     with open(subseq_file, 'rb') as csv_subseq:
         csvreader = csv.reader(csv_subseq, delimiter='\t')
         subsequences = list(csvreader)
 
     cc_all, kl_all, ig_all = [], [], []
 
-    prediction_root = 'Z:/PREDICTIONS_2017'
+    prediction_root = '/majinbu/public/DREYEVE/PREDICTIONS_CENTRAL_CROP'
     test_runs_measures = [(r, join(prediction_root, '{:02d}'.format(r))) for r in range(38, 75)]
 
     for (r, run_dir) in test_runs_measures:
