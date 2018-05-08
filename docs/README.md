@@ -10,7 +10,7 @@ A showcase of model predictions on the DR(eye)VE test set can be found here. The
 
 [![prediction_showcase](https://img.youtube.com/vi/GKjzOcwoc68/0.jpg)](https://www.youtube.com/watch?v=GKjzOcwoc68)
 
-### How was Fig.7 made?
+### How was Fig.8 made?
 Sec 3.1 of the paper investigates on what human fixations focus on 
 while driving, in terms of semantic classes. As explained in the paper,
 this analysis has been carried out by normalizing the fixation map
@@ -26,7 +26,7 @@ pixel labels accounted for the construction of the histogram of each threshold.
 ![fig7gif](https://media.giphy.com/media/l378jbMUMxdQ4Hlza/giphy.gif "fig7gif")
  
 Then, from accumulated class occurrences for each threshold we build a 
-histogram, that is represented by Fig.7.
+histogram, that is represented by Fig.8.
 
 ![fig7](img/fig7.png "fig7")
 
