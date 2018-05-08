@@ -26,7 +26,7 @@ pixel labels accounted for the construction of the histogram of each threshold.
 ![fig7gif](https://media.giphy.com/media/l378jbMUMxdQ4Hlza/giphy.gif "fig7gif")
  
 Then, from accumulated class occurrences for each threshold we build a 
-histogram, that is represented by Fig.7.
+histogram, that is represented by Fig.8.
 
 ![fig7](img/fig7.png "fig7")
 
