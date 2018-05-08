@@ -146,7 +146,8 @@ class DataLoader:
 
         # compute center of this subsequence
         seq, start, stop = self.subseqs[self.counter]
-        start = (start + stop) / 2 - frames_per_seq / 2
+        # start = (start + stop) / 2 - frames_per_seq / 2
+        start = np.random.randint(0, 7500 - frames_per_seq)
         stop = start + frames_per_seq
 
         # compute sequence dir
@@ -204,9 +205,8 @@ if __name__ == '__main__':
     np.savetxt(args.checkpoint_file + '.txt',
                X=np.concatenate(
                    (
-                       np.min(kld_results, axis=0, keepdims=True),
                        np.mean(kld_results, axis=0, keepdims=True),
-                       np.max(kld_results, axis=0, keepdims=True)
-                    ),
+                       np.std(kld_results, axis=0, keepdims=True)
+                   ),
                    axis=0
                ))
