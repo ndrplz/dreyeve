@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     cc_all, kl_all, ig_all = [], [], []
 
-    prediction_root = '/majinbu/public/DREYEVE/PREDICTIONS_CENTRAL_CROP'
+    prediction_root = '/majinbu/public/DREYEVE/PREDICTIONS_DISPLACED'
     test_runs_measures = [(r, join(prediction_root, '{:02d}'.format(r))) for r in range(38, 75)]
 
     for (r, run_dir) in test_runs_measures:
@@ -23,17 +23,17 @@ if __name__ == '__main__':
         with open(join(run_dir, 'metrics', 'cc.txt'), 'rb') as f:
             reader = csv.reader(f)
             headers = reader.next()  # store headers
-            cc_f_by_f = {int(row[0]): np.array(row[1:-1], dtype=np.float32) for row in reader}
+            cc_f_by_f = {int(row[0]): np.array(row[1:], dtype=np.float32) for row in reader}
 
         with open(join(run_dir, 'metrics', 'kld.txt'), 'r') as f:
             reader = csv.reader(f)
             headers = reader.next()  # store headers
-            kl_f_by_f = {int(row[0]): np.array(row[1:-1], dtype=np.float32) for row in reader}
+            kl_f_by_f = {int(row[0]): np.array(row[1:], dtype=np.float32) for row in reader}
 
         with open(join(run_dir, 'metrics', 'ig.txt'), 'r') as f:
             reader = csv.reader(f)
             headers = reader.next()  # store headers
-            ig_f_by_f = {int(row[0]): np.array(row[1:-1], dtype=np.float32) for row in reader}
+            ig_f_by_f = {int(row[0]): np.array(row[1:], dtype=np.float32) for row in reader}
 
         # make a list with all the frames of this run marked as 'keep'
         # each row of `keep_this_run` is a list of four entries [num_run, start_frame, end_frame, subsequence_class]
