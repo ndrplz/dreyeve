@@ -1,7 +1,14 @@
 # DR(eye)VE Project: code repository
 
+*A deep neural network trained to reproduce the human driver focus of attention.*
+
 <p align="center">
 <a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="img/overview.jpg" height="300px"/></a>
+</p>
+
+## Results (video)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=GKjzOcwoc68"><img src="http://img.youtube.com/vi/GKjzOcwoc68/0.jpg" alt="video_results" width="50%" height="50%"></a>
 </p>
 
 ## How-To
