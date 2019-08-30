@@ -38,12 +38,16 @@ Pre-trained weights of the `multi-branch model` can be downloaded from [this](ht
   <td align="center"><a href="https://arxiv.org/abs/1705.03854" target="_blank"><img src="img/paper_thumb.png" width="200px"/></a></td>
   </tr>
   <tr>
-  <td><pre>  @article{dreyeve2018,
-  title={Predicting the Driver's Focus of Attention: the DR(eye)VE Project},
-  author={Palazzi, Andrea and Abati, Davide and Calderara, Simone and Solera, Francesco and Cucchiara, Rita},
-  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
-  year={2018}
-  }</pre></td>
+  <td><pre>  @article{palazzi2018predicting,
+  title={Predicting the Driver's Focus of Attention: the DR (eye) VE Project},
+  author={Palazzi, Andrea and Abati, Davide and Solera, Francesco and Cucchiara, Rita},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={41},
+  number={7},
+  pages={1720--1733},
+  year={2018},
+  publisher={IEEE}
+}</pre></td>
   </tr>
 </table> 
 </p>
