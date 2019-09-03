@@ -42,15 +42,19 @@ an awareness of the object which is only circumstantial.
 <p align="center">
  <table>
   <tr>
-  <td align="center"><a href="https://arxiv.org/pdf/1705.03854.pdf" target="_blank"><img src="https://github.com/ndrplz/dreyeve/tree/master/img/paper_thumb.png" width="200px"/></a></td>
+  <td align="center"><a href="https://arxiv.org/abs/1705.03854" target="_blank"><img src="https://github.com/ndrplz/dreyeve/blob/master/img/paper_thumb.png" width="200px"/></a></td>
   </tr>
   <tr>
-  <td><pre>  @article{palazzi2017focus,
-  title={Predicting the Driver's Focus of Attention: the DR(eye)VE Project},
-  author={Palazzi, Andrea and Abati, Davide and Calderara, Simone and Solera, Francesco and Cucchiara, Rita},
-  journal={arXiv preprint arXiv:1705.03854},
-  year={2017}
-  }</pre></td>
+  <td><pre>  @article{palazzi2018predicting,
+  title={Predicting the Driver's Focus of Attention: the DR (eye) VE Project},
+  author={Palazzi, Andrea and Abati, Davide and Solera, Francesco and Cucchiara, Rita},
+  journal={IEEE transactions on pattern analysis and machine intelligence},
+  volume={41},
+  number={7},
+  pages={1720--1733},
+  year={2018},
+  publisher={IEEE}
+}</pre></td>
   </tr>
 </table> 
 </p>
